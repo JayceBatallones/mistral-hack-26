@@ -20,6 +20,9 @@ Extract keyframes from video, present token cost, then analyze.
 - ffmpeg (for frame extraction)
 - Python 3 + Pillow + numpy
 
+**Windows:** ffmpeg must be available in a conda environment named `media tools`.
+**Linux/Mac:** ffmpeg must be on PATH; Python deps via venv.
+
 ## Workflow
 
 ### 1. Capture User Intent
@@ -31,8 +34,16 @@ Clearly understand why the user wants the video analyzed:
 
 This intent becomes important context for the analysis.
 
-### 2. Create venv (First Time Only)
+### 2. Setup (First Time Only)
 
+Detect the platform and run the appropriate setup:
+
+**Windows — conda `media tools` env:**
+```bash
+conda install -n "media tools" pillow numpy --quiet -y
+```
+
+**Linux/Mac — venv:**
 ```bash
 cd {baseDir}/scripts
 python3 -m venv venv
@@ -42,9 +53,28 @@ pip install Pillow numpy --quiet
 
 ### 3. Extract Keyframes
 
+**Windows (conda):**
+```bash
+conda run -n "media tools" python "{baseDir}/scripts/extract_keyframes.py" "<video_path>" --method scene --ensure-last
+```
+
+**Linux/Mac (venv):**
 ```bash
 source {baseDir}/scripts/venv/bin/activate
-python3 {baseDir}/scripts/extract_keyframes.py "<video_path>"
+# Fast default (scene detection) with optional last-frame inclusion
+python3 {baseDir}/scripts/extract_keyframes.py "<video_path>" --method scene --ensure-last
+```
+
+### 3b. Parallel Analyze (Mistral)
+
+Run extraction + parallel analysis + merged report:
+
+```bash
+python3 {baseDir}/scripts/run_analysis.py "<video_path>" \
+  --env /path/to/.env \
+  --batch-size 6 \
+  --max-workers 4 \
+  --model mistral-small-latest
 ```
 
 Output example (JSON):
@@ -104,14 +134,30 @@ Benefits of this approach:
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `-t, --threshold` | 0.85 | Similarity threshold (higher = more frames kept) |
+| `-m, --method` | scene | Extraction method: `scene` (fast) or `similarity` (slow) |
+| `-t, --threshold` | 0.3 | Scene threshold for `scene` method (lower = more frames kept) |
 | `-q, --quality` | 30 | JPEG quality (1-100) |
 | `-s, --scale` | 0.3 | Resize scale |
 | `-o, --output` | `<video_name>_keyframes/` | Output directory |
+| `-w, --workers` | CPU-1 | Parallel compression workers (`similarity` method only) |
+| `--ensure-last` | off | Include last frame (`scene` method only) |
 
 ### Token Reduction Example
 
+**Windows (conda):**
+```bash
+# More aggressive reduction
+conda run -n "media tools" python "{baseDir}/scripts/extract_keyframes.py" video.mp4 --method scene -t 0.2 -q 20 -s 0.2 --ensure-last
+
+# Similarity method
+conda run -n "media tools" python "{baseDir}/scripts/extract_keyframes.py" video.mp4 --method similarity -t 0.85 -q 30 -s 0.3 -w 6
+```
+
+**Linux/Mac (venv):**
 ```bash
 # More aggressive reduction (lower threshold, quality, and size)
-python3 {baseDir}/scripts/extract_keyframes.py video.mp4 -t 0.75 -q 20 -s 0.2
+python3 {baseDir}/scripts/extract_keyframes.py video.mp4 --method scene -t 0.2 -q 20 -s 0.2 --ensure-last
+
+# Similarity method (slower, more precise)
+python3 {baseDir}/scripts/extract_keyframes.py video.mp4 --method similarity -t 0.85 -q 30 -s 0.3 -w 6
 ```
