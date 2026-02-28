@@ -26,6 +26,16 @@ Launch Chrome with remote debugging on `:9222`. Always copies the user's Chrome 
 
 > **Note:** The profile is a snapshot taken at startup. If you log into a new site in your regular Chrome after the browser was started, run `browser-start.js` again to re-sync and pick up the new cookies.
 
+## Open Agent Window (optional)
+
+```bash
+{baseDir}/browser-window.js
+```
+
+Opens a dedicated Chrome window for the agent to work in. Once created, all `--new` tabs from `browser-nav.js` open inside this window instead of the user's window. The user's existing Chrome window is left untouched.
+
+Run once per session. If the window is closed, run again to create a new one.
+
 ## Navigate
 
 ```bash

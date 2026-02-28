@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import puppeteer from "puppeteer-core";
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 
 const args = process.argv.slice(2);
 const newTab = args.includes("--new");
@@ -11,10 +13,13 @@ if (!url) {
 	console.log("Usage: browser-nav.js <url> [--new] [--reload]");
 	console.log("\nExamples:");
 	console.log("  browser-nav.js https://example.com          # Navigate current tab");
-	console.log("  browser-nav.js https://example.com --new    # Open in new tab");
+	console.log("  browser-nav.js https://example.com --new    # Open in agent window (if running), else new tab");
 	console.log("  browser-nav.js https://example.com --reload # Navigate and force reload");
 	process.exit(1);
 }
+
+const HOME = process.env.USERPROFILE || process.env.HOME;
+const AGENT_WINDOW_FILE = join(HOME, ".cache", "browser-tools", "agent-window-url");
 
 const b = await Promise.race([
 	puppeteer.connect({
@@ -29,9 +34,39 @@ const b = await Promise.race([
 });
 
 if (newTab) {
-	const p = await b.newPage();
-	await p.goto(url, { waitUntil: "domcontentloaded" });
-	console.log("✓ Opened:", url);
+	let opened = false;
+
+	// If an agent window exists, open the new tab inside it
+	if (existsSync(AGENT_WINDOW_FILE)) {
+		const anchorUrl = readFileSync(AGENT_WINDOW_FILE, "utf8").trim();
+		const anchorPage = (await b.pages()).find(p => p.url() === anchorUrl);
+
+		if (anchorPage) {
+			const newPagePromise = new Promise(resolve => {
+				const handler = async (t) => {
+					if (t.type() === "page") {
+						b.off("targetcreated", handler);
+						resolve(await t.page());
+					}
+				};
+				b.on("targetcreated", handler);
+			});
+			await anchorPage.evaluate(() => window.open("about:blank", "_blank"));
+			const newPage = await Promise.race([
+				newPagePromise,
+				new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
+			]);
+			await newPage.goto(url, { waitUntil: "domcontentloaded" });
+			console.log("✓ Opened in agent window:", url);
+			opened = true;
+		}
+	}
+
+	if (!opened) {
+		const p = await b.newPage();
+		await p.goto(url, { waitUntil: "domcontentloaded" });
+		console.log("✓ Opened:", url);
+	}
 } else {
 	const p = (await b.pages()).at(-1);
 	await p.goto(url, { waitUntil: "domcontentloaded" });
