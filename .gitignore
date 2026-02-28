@@ -1,11 +1,12 @@
 # OS
 .DS_Store
 
-# Video files and extracted frames (large binaries — keep locally)
-*.mov
+# Extracted keyframes (generated, large)
+*_keyframes/
+
+# Large video files (add specific test videos explicitly if needed)
 *.mp4
 *.webm
-*_keyframes/
 
 # Node
 node_modules/
