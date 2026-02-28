@@ -1,4 +1,4 @@
-# PRD: Video Demo → Skill → Agent Workflow
+# PRD: Video → Skill → Agent (via Claude Code)
 
 **Product Name:** SkillForge (working title)
 **Date:** February 28, 2026
@@ -9,565 +9,414 @@
 
 ## 1. Problem Statement
 
-Teaching an AI agent to perform a task currently requires manual coding of every step — writing selectors, defining actions, handling edge cases. This is slow, brittle, and inaccessible to non-developers.
+Teaching an AI agent to perform a task currently requires manually writing code. Users should be able to **record a workflow once and have AI generate a replayable skill — to run via computer use**.
 
-**Users should be able to show a workflow once and have an agent replicate it forever.**
+The missing piece is a UI that makes the Claude Code output visible and the generated SKILL.md readable, without touching the terminal.
 
 ---
 
 ## 2. Product Vision
 
-A tool where a user **records a screen demo** of any workflow, and the system automatically generates an **editable skill in markdown** that an **agent can replay** on demand. The user is always in control — they can read, edit, and refine the skill before the agent runs it.
+A split-panel web UI — modelled on [Manimate](https://manimate.app/) — where:
+
+- The **left panel** is a live view of a Claude Code conversation. The user attaches a video and types a prompt. Claude Code uses the `/video-frame-reader` skill to analyze it and write a `SKILL.md` file. All output streams in real-time.
+- The **right panel** shows the generated `SKILL.md` content, updating as Claude Code writes it.
+- The user corrects or refines the skill by typing follow-up prompts — Claude Code edits `SKILL.md` accordingly.
+- To replay, the user types `"replay the workflow"` — Claude Code reads `SKILL.md` and uses the `browser-tools` skill to execute it in Chrome.
+
+**Runtime:** Claude Code (primary). Mistral Vibe is a potential future swap — keep the architecture runtime-agnostic where possible.
 
 ---
 
-## 3. User Flow
+## 3. The Core User Prompt
+
+Everything starts with attaching a video and typing a prompt — exactly like attaching an image in Manimate:
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────┐
-│  1. RECORD   │ ──▶ │  2. PROCESS  │ ──▶ │  3. EDIT     │ ──▶ │  4. REPLAY  │
-│  Screen demo │     │  Video→Skill │     │  Markdown +  │     │  Agent runs │
-│              │     │  (loading)   │     │  Visual flow │     │  the skill  │
-└─────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
+[📎 Screen Recording 2026-02-27 at 1.27.08 pm.mov]
+
+use /video-frame-reader on this recording and create SKILL.md for the workflow
+```
+
+From this, Claude Code:
+1. Invokes `/video-frame-reader` — extracts keyframes, analyzes each with vision
+2. Synthesizes a `SKILL.md` describing the workflow in natural language
+3. Streams all output to the left panel via SSE
+
+The UI surfaces this without requiring the terminal.
+
+---
+
+## 4. User Flow
+
+```
+┌─────────────────────┐    ┌─────────────────────────────────┐    ┌──────────────────┐
+│  1. ATTACH + PROMPT  │ ──▶│  2. CLAUDE CODE PROCESSES        │ ──▶│  3. REVIEW       │
+│                      │    │     (left panel streams SSE)     │    │                  │
+│  Drag-drop video     │    │                                  │    │  Right panel     │
+│  into prompt box     │    │  /video-frame-reader → frames    │    │  shows SKILL.md  │
+│  + type prompt       │    │  vision analysis → descriptions  │    │  as it's written │
+│                      │    │  synthesis → SKILL.md written    │    │                  │
+└─────────────────────┘    └─────────────────────────────────┘    └──────────────────┘
+                                                                           │
+                                                          ┌────────────────▼──────────────┐
+                                                          │  4. REFINE + REPLAY (prompt)   │
+                                                          │                                │
+                                                          │  "step 3 should scroll first"  │
+                                                          │  → Claude edits SKILL.md       │
+                                                          │                                │
+                                                          │  "replay the workflow"         │
+                                                          │  → Claude uses browser-tools   │
+                                                          │    to execute SKILL.md in      │
+                                                          │    Chrome (CDP)                │
+                                                          └────────────────────────────────┘
 ```
 
 ### Step-by-step:
 
-1. **User presses Record** — screen recording begins (browser-based or CLI tool)
-2. **User performs the workflow** — e.g. filling out a form, navigating between pages, clicking buttons
-3. **User presses Stop** — recording ends, video is sent to backend
-4. **Processing begins** — CLI tool launches, loading state with progress ("Extracting frames...", "Analyzing actions...", "Generating skill...")
-5. **Skill is generated** — displayed as editable markdown with a side-by-side visual flow (JSON-powered node diagram)
-6. **User reviews and edits** — can modify steps, reorder, add/remove actions directly in the markdown
-7. **User presses Replay** — agent executes the skill step-by-step, doing exactly the same thing
+1. **User drags a video** into the prompt input (or uses the file picker / paste) — same UX as image attachment in Manimate
+2. **User types a prompt** and hits Send
+3. **Left panel streams** — Claude Code's tool calls, frame analysis, and SKILL.md being written appear in real-time
+4. **Right panel updates** — SKILL.md content renders as Claude writes it
+5. **User reads SKILL.md** in the right panel and types corrections in the prompt box
+6. **Claude edits SKILL.md** — right panel updates
+7. **User types `"replay the workflow"`** — Claude reads SKILL.md and drives `browser-tools` (CDP) to execute it in Chrome; output streams in the left panel
 
 ---
 
-## 4. Core Architecture
+## 5. Core Architecture
 
-### 4.1 Pipeline Overview
+### 5.1 System Components
 
 ```
-Video (mp4/webm)
-    │
-    ▼
-Frame Extraction (keyframe detection on UI changes)
-    │
-    ▼
-Parallel Mistral Vision Calls (fan-out: N frames concurrently)
-    │
-    ▼
-Frame Descriptions (what's on screen, what changed, what action)
-    │
-    ▼
-Mistral Synthesis Call (merge all frame descriptions → skill)
-    │
-    ▼
-Skill Markdown (human-readable, editable)
-    │
-    ▼
-JSON Conversion (for UI visualization / node diagram)
-    │
-    ▼
-Agent Replay Engine (Playwright browser automation)
+┌──────────────────────────────────────────────────────────────────┐
+│                          WEB UI (Next.js)                         │
+│                                                                    │
+│  ┌──────────────────────────┐   ┌──────────────────────────────┐  │
+│  │   LEFT PANEL              │   │   RIGHT PANEL                 │  │
+│  │   (ChatMessages)          │   │   (PreviewPanel)              │  │
+│  │                           │   │                              │  │
+│  │  • User messages          │   │  SKILL.md content            │  │
+│  │  • Tool call pills        │   │  (markdown rendered,         │  │
+│  │    (collapsible)          │   │   updates as Claude          │  │
+│  │  • Frame analysis logs    │   │   writes the file)           │  │
+│  │  • SKILL.md streaming     │   │                              │  │
+│  │  • Claude text replies    │   │                              │  │
+│  │                           │   │                              │  │
+│  └──────────────────────────┘   └──────────────────────────────┘  │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  [📎] Attach video  |  Type a prompt...              [Send]  │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+                              │ SSE (text/event-stream)
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                  BACKEND (Next.js API routes)                      │
+│                                                                    │
+│  /api/chat          → spawn Claude Code process, stream output     │
+│  /api/chat/uploads  → save attached video to session workspace     │
+│  /api/sessions      → create / list sessions (UUID-keyed)         │
+│  /api/files         → read SKILL.md for right panel               │
+│  /api/cancel        → cancel active Claude run                     │
+└──────────────────────────────────────────────────────────────────┘
+                              │ subprocess
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                     Claude Code CLI                                │
+│                                                                    │
+│   Skills available:                                                │
+│   • /video-frame-reader  (yusuke-claude-code plugin)              │
+│   • browser-tools        (pi-skills, CDP on :9222)                │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Skill Format: Markdown-First
+### 5.2 Skills Used
 
-The skill is stored and edited as **markdown**. This is the source of truth.
+#### `/video-frame-reader`
+Source: `https://github.com/Yusuke710/yusuke-claude-code/tree/main/plugins/video-frame-reader`
+
+- Takes a video file path as input
+- Extracts keyframes (de-duped, optimized for token efficiency)
+- Analyzes each frame with vision (Claude's built-in image understanding)
+- Returns structured frame descriptions
+- Claude uses these to synthesize `SKILL.md`
+
+#### `browser-tools`
+Source: `https://github.com/badlogic/pi-skills/tree/main/browser-tools`
+
+- Chrome DevTools Protocol (CDP) on `:9222`
+- Scripts: `browser-nav.js`, `browser-eval.js`, `browser-screenshot.js`, `browser-pick.js`
+- Invoked by Claude when the user asks it to replay the workflow
+- No Playwright — CDP directly via Node.js scripts
+
+### 5.3 SKILL.md Format
+
+The output of the pipeline. **No rigid schema required** — the format is flexible, natural-language markdown. The only constraint: it must be readable by a coding agent so Claude can re-execute the workflow. Claude interprets intent, not syntax.
+
+Convention: the file is always named `SKILL.md` (uppercase), consistent with the pi-skills ecosystem.
+
+**Example (not a prescribed schema):**
 
 ```markdown
-# Skill: Sign Up Form Validation
-
-## Context
-- URL: https://app.example.com/signup
-- Browser: Chrome
-- Purpose: Complete the sign-up form and verify validation works
-
-## Steps
-
-1. **Navigate** to `https://app.example.com/signup`
-2. **Click** on the "Email" input field
-3. **Type** `test@example.com` into the email field
-4. **Click** on the "Password" input field
-5. **Type** `SecurePass123!` into the password field
-6. **Click** the "Create Account" button
-7. **Wait** for page to load (max 5s)
-8. **Verify** success message: "Account created successfully"
-
-## Notes
-- Step 6 triggers client-side validation before submission
-- If validation fails, error messages appear inline
-```
-
-**Why markdown:**
-- Readable by humans and LLMs
-- Easy to edit in any text editor
-- Mistral generates natural text far more reliably than structured JSON
-- Version-controllable (git-friendly)
-- Low friction for users to modify
-
-### 4.3 JSON Visualization Schema
-
-The markdown is parsed into JSON for the visual flow editor:
-
-```json
-{
-  "skill_name": "Sign Up Form Validation",
-  "context": {
-    "url": "https://app.example.com/signup",
-    "browser": "Chrome"
-  },
-  "steps": [
-    {
-      "id": 1,
-      "action": "navigate",
-      "target": "https://app.example.com/signup",
-      "raw_markdown": "**Navigate** to `https://app.example.com/signup`"
-    },
-    {
-      "id": 2,
-      "action": "click",
-      "target": "Email input field",
-      "raw_markdown": "**Click** on the \"Email\" input field"
-    },
-    {
-      "id": 3,
-      "action": "type",
-      "target": "email field",
-      "value": "test@example.com",
-      "raw_markdown": "**Type** `test@example.com` into the email field"
-    },
-    {
-      "id": 4,
-      "action": "click",
-      "target": "Password input field",
-      "raw_markdown": "**Click** on the \"Password\" input field"
-    },
-    {
-      "id": 5,
-      "action": "type",
-      "target": "password field",
-      "value": "SecurePass123!",
-      "raw_markdown": "**Type** `SecurePass123!` into the password field"
-    },
-    {
-      "id": 6,
-      "action": "click",
-      "target": "Create Account button",
-      "raw_markdown": "**Click** the \"Create Account\" button"
-    },
-    {
-      "id": 7,
-      "action": "wait",
-      "condition": "page load",
-      "timeout_ms": 5000,
-      "raw_markdown": "**Wait** for page to load (max 5s)"
-    },
-    {
-      "id": 8,
-      "action": "verify",
-      "expected": "Account created successfully",
-      "raw_markdown": "**Verify** success message: \"Account created successfully\""
-    }
-  ]
-}
-```
-
-### 4.4 Action Types
-
-| Action       | Description                          | Parameters                     |
-|------------- |--------------------------------------|-------------------------------|
-| `navigate`   | Go to a URL                          | `target` (URL)                |
-| `click`      | Click an element                     | `target` (description/selector)|
-| `type`       | Enter text into a field              | `target`, `value`             |
-| `wait`       | Wait for a condition                 | `condition`, `timeout_ms`     |
-| `verify`     | Assert something is true on page     | `expected` (text/condition)   |
-| `scroll`     | Scroll the page                      | `direction`, `amount`         |
-| `select`     | Choose from a dropdown               | `target`, `value`             |
-| `hover`      | Hover over an element                | `target`                      |
-| `keypress`   | Press a keyboard key                 | `key` (e.g. "Enter", "Tab")  |
-
----
-
-## 5. Technical Implementation
-
-### 5.1 Video Processing & Frame Extraction
-
-**Input:** Screen recording (mp4/webm)
-**Output:** Ordered list of keyframes with timestamps
-
-- Use `ffmpeg` or OpenCV for frame extraction
-- **Intelligent sampling**: detect significant UI changes between frames (pixel diff / structural similarity) rather than fixed-interval extraction
-- Target: 10-30 keyframes for a typical 1-2 minute demo
-- Each frame saved as PNG with timestamp metadata
-
-```python
-# Pseudocode
-frames = extract_all_frames(video, fps=2)  # 2fps baseline
-keyframes = []
-for i, frame in enumerate(frames):
-    if i == 0 or structural_diff(frame, keyframes[-1]) > THRESHOLD:
-        keyframes.append(frame)
-```
-
-### 5.2 Parallel Mistral Vision Analysis
-
-**Input:** Keyframes
-**Output:** Per-frame action descriptions
-
-- Fan-out: send all keyframes to Mistral vision API concurrently (async)
-- Each call asks: "What is shown on this screen? What UI element is being interacted with? What action is the user performing?"
-- Use `asyncio.gather()` or equivalent for parallel execution
-- Stream partial results back to frontend as they complete
-
-```python
-# Pseudocode
-async def analyze_frame(frame, index):
-    response = await mistral.chat(
-        model="mistral-large-latest",
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "image", "data": frame},
-                {"type": "text", "text": FRAME_ANALYSIS_PROMPT}
-            ]
-        }]
-    )
-    return {"index": index, "description": response.text}
-
-# Fan-out all frames in parallel
-results = await asyncio.gather(*[
-    analyze_frame(frame, i) for i, frame in enumerate(keyframes)
-])
-```
-
-**Frame Analysis Prompt:**
-```
-You are analyzing a screenshot from a screen recording of a user performing a task.
-
-Describe:
-1. What application/website is shown
-2. What UI element is the user interacting with (if any)
-3. What action is being performed (click, type, scroll, navigate, etc.)
-4. Any text being entered or displayed
-5. What changed compared to what you'd expect from the previous step
-
-Be specific about element locations and identifiers (button text, field labels, URLs).
-```
-
-### 5.3 Skill Synthesis (Markdown Generation)
-
-**Input:** Ordered frame descriptions
-**Output:** Skill markdown document (streamed)
-
-Single Mistral call that takes all frame descriptions and produces the skill:
-
-```python
-synthesis_prompt = f"""
-You are generating a replayable skill document from a series of screen recording frames.
-
-Frame descriptions (in order):
-{formatted_frame_descriptions}
-
-Generate a skill in this exact markdown format:
-
 # Skill: [descriptive name]
 
 ## Context
-- URL: [starting URL]
-- Browser: [browser if visible]
-- Purpose: [what this workflow accomplishes]
+- Video: Screen Recording 2026-02-27 at 1.27.08 pm.mov
+- URL: [detected from recording]
+- Purpose: [inferred from workflow]
 
 ## Steps
 
-1. **[Action]** [description with specific targets and values]
-2. **[Action]** [description]
-...
+1. Navigate to `https://example.com`
+2. Click the "Sign Up" button
+3. Type `user@example.com` into the email field
+4. Click "Submit"
+5. Verify the success message appears
 
 ## Notes
-- [any important observations about timing, validation, edge cases]
-
-Rules:
-- Each step must start with a bold action word: Navigate, Click, Type, Wait, Verify, Scroll, Select, Hover, Keypress
-- Include exact text/values in backticks
-- Include specific element descriptions (use label text, placeholder text, or visual description)
-- Merge redundant frames (e.g. multiple frames of typing = one Type step)
-- Keep steps atomic — one action per step
-"""
+- [observations from frame analysis, timing, edge cases]
 ```
 
-### 5.4 Markdown ↔ JSON Parser
+### 5.4 Data Flow
 
-Bidirectional conversion so edits in either view stay synced:
-
-**Markdown → JSON:**
-- Parse numbered list items
-- Extract bold action word as `action`
-- Extract backtick content as `value` or `target`
-- Extract quoted strings as element descriptions
-
-**JSON → Markdown:**
-- Reconstruct numbered list from step objects
-- Preserve formatting conventions
-
-```python
-import re
-
-def parse_skill_markdown(md: str) -> dict:
-    steps = []
-    for match in re.finditer(
-        r'(\d+)\.\s+\*\*(\w+)\*\*\s+(.*)', md
-    ):
-        step = {
-            "id": int(match.group(1)),
-            "action": match.group(2).lower(),
-            "raw_markdown": match.group(0),
-            "description": match.group(3)
-        }
-        # Extract backtick values
-        backticks = re.findall(r'`([^`]+)`', step["description"])
-        if backticks:
-            step["value"] = backticks[0]
-        steps.append(step)
-    return {"steps": steps}
 ```
+User attaches video + types prompt
+    │
+    ▼
+Video uploaded to session workspace (/api/chat/uploads)
+    │
+    ▼
+Claude Code receives prompt (with video file path)
+    │
+    ├──▶ /video-frame-reader skill
+    │         ├── extract keyframes from video
+    │         ├── analyze frames with vision (parallel)
+    │         └── return frame descriptions
+    │
+    ├──▶ Synthesize SKILL.md
+    │         ├── merge descriptions → natural language steps
+    │         └── write SKILL.md to session workspace
+    │
+    └──▶ SSE stream → left panel
+              (tool calls, frame logs, SKILL.md content chunk by chunk)
 
-### 5.5 Agent Replay Engine
+Right panel polls /api/files for SKILL.md content and renders it
 
-**Input:** Skill JSON (parsed from markdown)
-**Output:** Executed workflow in browser
-
-Uses Playwright to replay each step:
-
-```python
-from playwright.async_api import async_playwright
-
-async def replay_skill(skill_json: dict):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
-        page = await browser.new_page()
-
-        for step in skill_json["steps"]:
-            action = step["action"]
-
-            if action == "navigate":
-                await page.goto(step["value"])
-
-            elif action == "click":
-                # Use Mistral to resolve description → selector at runtime
-                element = await find_element(page, step["description"])
-                await element.click()
-
-            elif action == "type":
-                element = await find_element(page, step["description"])
-                await element.fill(step["value"])
-
-            elif action == "wait":
-                await page.wait_for_timeout(step.get("timeout_ms", 3000))
-
-            elif action == "verify":
-                content = await page.content()
-                assert step["expected"] in content
-
-            # Screenshot after each step for debugging
-            await page.screenshot(path=f"step_{step['id']}.png")
+On "replay the workflow" prompt:
+    Claude Code reads SKILL.md
+    → invokes browser-tools scripts (nav, eval, screenshot)
+    → streams step logs to left panel via SSE
 ```
-
-**Element Resolution:** The agent uses Mistral vision at runtime to match the natural-language element description to an actual DOM element — screenshot the page, ask Mistral to identify the element, extract coordinates or generate a selector.
 
 ---
 
 ## 6. API Endpoints
 
-| Method | Endpoint               | Description                              | Input                  | Output                          |
-|--------|------------------------|------------------------------------------|------------------------|---------------------------------|
-| POST   | `/api/upload-video`    | Upload screen recording                  | Video file (mp4/webm)  | `{ job_id }`                    |
-| GET    | `/api/status/{job_id}` | SSE stream of processing progress        | —                      | Stream: progress events         |
-| GET    | `/api/skill/{job_id}`  | Get generated skill markdown             | —                      | `{ markdown, json, frames[] }`  |
-| PUT    | `/api/skill/{job_id}`  | Update skill (user edits)                | `{ markdown }`         | `{ json }` (re-parsed)          |
-| POST   | `/api/replay/{job_id}` | Trigger agent replay                     | `{ skill_json }`       | SSE stream: step-by-step status |
+Modelled on Manimate's API structure:
+
+| Method | Endpoint | Description | Input | Output |
+|--------|----------|-------------|-------|--------|
+| POST | `/api/chat` | Send prompt to Claude Code, stream output | `{ session_id, prompt, video_path? }` | SSE stream |
+| POST | `/api/chat/uploads` | Upload attached video to session workspace | FormData (video file) | `{ path, name, size }` |
+| POST | `/api/cancel` | Cancel active Claude run | `{ session_id }` | `{ ok }` |
+| GET | `/api/sessions` | List all sessions | — | `[{ id, created_at, ... }]` |
+| POST | `/api/sessions` | Create new session | — | `{ id }` |
+| GET | `/api/sessions/[id]` | Get session details | — | session object |
+| GET | `/api/files` | Read a file from session workspace | `?session_id=&path=` | file content |
 
 ---
 
 ## 7. UI Specification
 
-### 7.1 Screen 1: Record
+### 7.1 Layout — Modelled on [Manimate](https://manimate.app/)
 
-- Large centered **Record** button (red circle)
-- "Record your workflow" heading
-- Option to upload existing video file
-- Minimal UI — get out of the way
+Manimate's architecture (explored locally at `./Manimate`):
+- **Left panel** (`ChatMessages.tsx`) — chat timeline: user messages, collapsible tool-call pills, assistant text, auto-scrolls to bottom
+- **Right panel** (`PreviewPanel.tsx`) — tabbed artifact view: shows Plan/Code/Preview, updates when the agent writes files
+- **Prompt input** (`ChatInput.tsx`) — text + image attachment (drag-drop, file picker, paste)
+- **Sessions** — UUID in URL query param (`?session=<uuid>`), per-tab isolation, listed in sidebar
+- **SSE** — `TransformStream` backend + `ReadableStream`/`TextDecoder` frontend, NDJSON events
 
-### 7.2 Screen 2: Processing
-
-- Animated loading state ("vibe" — the CLI-launching feel)
-- Progress indicators streamed from backend:
-  - "Extracting key frames... (12 found)"
-  - "Analyzing frame 3/12..."
-  - "Generating skill..."
-- Thumbnail strip of extracted keyframes appearing as they're processed
-
-### 7.3 Screen 3: Edit (Main View)
-
-**Split-pane layout:**
+We follow the same pattern directly:
 
 ```
-┌─────────────────────────┬─────────────────────────┐
-│                         │                         │
-│   MARKDOWN EDITOR       │   VISUAL FLOW           │
-│                         │                         │
-│   # Skill: Form Valid   │   ┌──────────┐          │
-│                         │   │ Navigate │          │
-│   ## Steps              │   └────┬─────┘          │
-│                         │        │                │
-│   1. **Navigate** to    │   ┌────▼─────┐          │
-│      `https://...`      │   │  Click   │          │
-│   2. **Click** on the   │   └────┬─────┘          │
-│      email field        │        │                │
-│   3. **Type** `test@..  │   ┌────▼─────┐          │
-│                         │   │   Type   │          │
-│                         │   └────┬─────┘          │
-│                         │        │                │
-│                         │        ▼                │
-│                         │       ...               │
-│                         │                         │
-├─────────────────────────┴─────────────────────────┤
-│                                                   │
-│   [ ▶ Replay ]                    [ Save Skill ]  │
-│                                                   │
-└───────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│  SkillForge                  [Sessions ▾]   [New Session]  │
+├──────────────────────────┬────────────────────────────────┤
+│                          │                                 │
+│   LEFT: CHAT TIMELINE    │   RIGHT: SKILL.md               │
+│                          │                                 │
+│   ▶ video-frame-reader   │   # Skill: Sign Up Flow        │
+│     extracting 14 frames │                                 │
+│   ▶ vision analysis      │   ## Context                   │
+│     frame 3/14...        │   - URL: https://...           │
+│   ✓ SKILL.md written     │                                 │
+│                          │   ## Steps                     │
+│   Claude: I've generated │   1. Navigate to ...           │
+│   the skill. Want me to  │   2. Click Sign Up             │
+│   replay it?             │   3. Type email@...            │
+│                          │   4. Click Submit              │
+│                          │   5. Verify success            │
+│                          │                                 │
+├──────────────────────────┴────────────────────────────────┤
+│  [📎]  replay the workflow                        [Send]   │
+└───────────────────────────────────────────────────────────┘
 ```
 
-- **Left pane:** Full markdown editor (syntax highlighted, directly editable)
-- **Right pane:** Node/flow diagram generated from JSON (visual representation of steps with arrows)
-- **Synced:** Edits in markdown instantly update the flow diagram and vice versa
-- **Replay button:** Triggers the agent to execute
-- **Save button:** Persists the skill for future use
+### 7.2 Left Panel: Chat Timeline
 
-### 7.4 Screen 4: Replay
+Directly follows Manimate's `ChatMessages.tsx` pattern:
 
-- Browser window showing the agent executing steps in real-time
-- Step-by-step progress indicator (highlights current step in the flow)
-- Pause/Stop controls
-- Screenshot capture at each step for audit trail
+- **User messages** — text + video attachment thumbnail
+- **Tool call pills** — collapsible blocks per tool invocation (e.g. "▶ video-frame-reader: 14 frames extracted"), with expandable input/output
+- **Assistant text** — Claude's replies rendered as markdown
+- **Auto-scroll** — follows new content, pauses if user scrolls up
+- **Status indicators** — spinner (running), checkmark (done), error badge (failed)
 
----
+### 7.3 Right Panel: SKILL.md Viewer
 
-## 8. Hackathon Work Split
+Follows Manimate's `PreviewPanel.tsx` pattern, simplified to one artifact:
 
-### Person 1: Video → Frames → Descriptions (Backend Pipeline)
+- Displays the content of `SKILL.md` from the session workspace
+- Updates when Claude writes or edits the file (same mechanism as Manimate's plan/code tabs — frontend fetches `/api/files` on `tool_use` Write/Edit events for `SKILL.md`)
+- Renders as syntax-highlighted markdown
+- **Visualization format is TBD** — for MVP just show the raw markdown; diagram rendering (draw.io, mermaid, etc.) is a stretch goal decided later
 
-**Scope:**
-- Video upload endpoint (`/api/upload-video`)
-- Frame extraction with keyframe detection (ffmpeg + OpenCV)
-- Parallel Mistral vision API calls for frame analysis
-- SSE streaming of progress to frontend
-- Frame analysis prompt engineering
+### 7.4 Prompt Input
 
-**Deliverables:**
-- `POST /api/upload-video` → returns `job_id`
-- `GET /api/status/{job_id}` → SSE stream with frame descriptions
-- Extracted frames stored with metadata
+Follows Manimate's `ChatInput.tsx` pattern:
 
-**Tech:** Python, FastAPI, ffmpeg, OpenCV, Mistral API, asyncio
+- Text area + **📎 attach button** for video files (also drag-drop and paste)
+- Video uploaded to session workspace on send → file path injected into prompt context
+- Supported formats: `.mp4`, `.mov`, `.webm` (video equivalents of Manimate's image support)
+- Send on Enter (Shift+Enter for newline)
 
-### Person 2: Skill Engine + Replay (Core Logic)
+### 7.5 Sessions
 
-**Scope:**
-- Mistral synthesis prompt: frame descriptions → skill markdown
-- Markdown ↔ JSON bidirectional parser
-- Skill CRUD endpoints (`GET/PUT /api/skill/{job_id}`)
-- Agent replay engine with Playwright
-- Replay streaming endpoint (`POST /api/replay/{job_id}`)
+Follows Manimate's session model exactly:
 
-**Deliverables:**
-- Skill generation from frame descriptions
-- Parser that converts markdown ↔ JSON reliably
-- Working replay engine for core action types (navigate, click, type, wait, verify)
-- Replay SSE stream with step status
+- Each session has a UUID, stored in URL as `?session=<uuid>`
+- Per-session workspace directory on disk: `workspaces/<session_id>/`
+- `SKILL.md` and uploaded video live in the session workspace
+- Sessions listed in a sidebar, switchable per tab
+- Draft prompt persisted in `localStorage` keyed by session ID
 
-**Tech:** Python, FastAPI, Playwright, Mistral API, regex parser
+### 7.6 Prompt Examples
 
-### Person 3: Frontend & UI
-
-**Scope:**
-- Record screen (MediaRecorder API / file upload)
-- Processing loading screen with SSE progress
-- Split-pane editor: markdown editor + visual flow diagram
-- Bidirectional sync between markdown and flow views
-- Replay controls and step-by-step visualization
-
-**Deliverables:**
-- Full 4-screen UI flow (Record → Process → Edit → Replay)
-- Markdown editor with syntax highlighting
-- Flow diagram component (React Flow or similar)
-- SSE client for streaming progress and replay status
-
-**Tech:** React/Next.js, React Flow, CodeMirror (markdown editor), SSE client
+```
+💡 Try:
+  [attach video] "use /video-frame-reader on this and create SKILL.md"
+  "step 3 is wrong — the user clicked Login not Sign Up"
+  "add a wait after step 4"
+  "replay the workflow"
+```
 
 ---
 
-## 9. Integration Timeline
+## 8. SSE Event Schema
 
-| Time    | Milestone                                                    |
-|---------|--------------------------------------------------------------|
-| 0:00    | Align on this PRD, skill schema, API contracts               |
-| 0:15    | Everyone starts building in parallel                         |
-| 1:30    | Person 1: frame extraction working, Mistral calls returning  |
-| 1:30    | Person 2: parser working on sample markdown, Playwright PoC  |
-| 1:30    | Person 3: UI shell with all 4 screens, mock data flowing     |
-| 2:30    | Person 1: full pipeline end-to-end (video → frame descs)     |
-| 2:30    | Person 2: skill generation + replay working on mock data     |
-| 3:00    | **Integration point**: wire Person 1 output → Person 2 input |
-| 3:30    | **Integration point**: wire backend → Person 3 frontend      |
-| 4:00    | End-to-end demo working                                      |
-| 4:00+   | Polish, edge cases, demo prep                                |
+Follows Manimate's NDJSON-over-SSE pattern (`src/lib/types.ts`):
+
+**Backend:** `TransformStream` → writes `data: <json>\n\n` per event
+**Frontend:** `ReadableStream` + `TextDecoder` → splits on `\n`, parses `data:` lines
+
+```typescript
+// Core event types (subset of Manimate's SSEEvent)
+type SSEEvent =
+  | { type: "system_init"; message: string; session_id: string }
+  | { type: "assistant_text"; message: string }
+  | { type: "tool_use"; tool_name: string; tool_input: Record<string, unknown> }
+  | { type: "tool_result"; tool_name: string; result: string; is_error: boolean }
+  | { type: "skill_written"; path: string }   // triggers right panel to fetch SKILL.md
+  | { type: "complete"; message: string }
+  | { type: "error"; message: string }
+```
+
+The `skill_written` event fires when Claude writes or edits `SKILL.md` — the frontend fetches `/api/files?session_id=&path=SKILL.md` and refreshes the right panel.
 
 ---
 
-## 10. Key Technical Risks & Mitigations
+## 9. Hackathon Work Split
+
+### Person 1: Backend — SSE Server + Claude Code Integration
+
+**Scope:**
+- Next.js API routes: `/api/chat` (SSE), `/api/chat/uploads`, `/api/sessions`, `/api/files`, `/api/cancel`
+- Spawn Claude Code as subprocess, pipe stdout to SSE stream (NDJSON → SSE events)
+- Per-session workspace directory: create on session init, store uploaded video + SKILL.md
+- Ensure `video-frame-reader` and `browser-tools` skills are available to Claude Code
+
+**Tech:** Next.js API routes, Node.js `child_process`, `TransformStream`, SQLite (sessions)
+
+### Person 2: Skills Validation
+
+**Scope:**
+- Verify `/video-frame-reader` works end-to-end with a sample recording
+- Verify `browser-tools` (CDP) can execute a simple SKILL.md when Claude asks it to
+- Document any setup steps (Chrome flags, skill config) needed for demo day
+
+**Tech:** Existing skills only — no new code unless a bug needs patching
+
+### Person 3: Frontend UI
+
+**Scope:**
+- Port/adapt Manimate's `ChatMessages.tsx`, `PreviewPanel.tsx`, `ChatInput.tsx`, `SplitPanel.tsx`
+- Left panel: SSE client, tool pill rendering, auto-scroll
+- Right panel: fetch and render SKILL.md markdown on `skill_written` events
+- Prompt input: text + video file attachment (drag-drop, picker, paste)
+- Session management: UUID in URL, session sidebar
+
+**Tech:** Next.js, React, TypeScript, Tailwind, react-markdown — same stack as Manimate
+
+---
+
+## 10. Integration Timeline
+
+| Time  | Milestone |
+|-------|-----------|
+| 0:00  | Align on PRD, SSE event schema, workspace path conventions |
+| 0:15  | Everyone starts in parallel |
+| 1:30  | P1: SSE server spawning Claude Code, events streaming to terminal |
+| 1:30  | P2: video-frame-reader tested on sample video, SKILL.md produced |
+| 1:30  | P3: UI shell with left/right panels, mock SSE data flowing |
+| 2:30  | P1: video upload + full pipeline: prompt → SKILL.md written → SSE streamed |
+| 2:30  | P2: browser-tools replaying a hand-written SKILL.md in Chrome |
+| 3:00  | **Integration**: wire backend → frontend, SKILL.md appearing in right panel |
+| 3:30  | End-to-end demo: attach video → SKILL.md generated → "replay" works |
+| 4:00+ | Polish: tool pills, error states, demo prep |
+
+---
+
+## 11. Key Technical Risks & Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| Mistral vision inaccurate on complex UIs | Steps are wrong/incomplete | Editable markdown lets user fix; pick a simple demo for hackathon |
-| Parallel API calls hit rate limits | Processing is slow | Batch in groups of 5, add retry logic with backoff |
-| Element resolution fails during replay | Agent can't find buttons/fields | Fallback: screenshot + Mistral vision at runtime to locate elements |
-| Markdown parser breaks on edge cases | JSON out of sync | Keep parser simple, validate with test cases, use `raw_markdown` fallback |
-| Screen recording API limitations | Can't capture certain content | Offer file upload as alternative to browser recording |
+| Claude Code subprocess hard to wrap for SSE | Streaming broken | Pipe stdout line-by-line; Claude Code outputs NDJSON — same pattern Manimate uses |
+| `video-frame-reader` slow on long recording | Demo feels slow | Use 30–60s recording for demo; skill already de-dupes frames |
+| `browser-tools` CDP can't resolve natural-language steps | Replay fails | Use `browser-pick.js` to pre-validate selectors; keep demo workflow simple |
+| SKILL.md not detected by right panel | Panel stays empty | Fire `skill_written` SSE event explicitly when Claude's Write tool targets `SKILL.md` |
+| Session workspace collision | Files overwritten | Each session gets `workspaces/<uuid>/` — no shared paths |
 
 ---
 
-## 11. Demo Script (Hackathon Presentation)
+## 12. Demo Script (Hackathon Presentation)
 
-1. **Open the app** — show the clean record screen
-2. **Record a workflow** — fill out a simple sign-up form (30 seconds)
-3. **Stop recording** — show the processing animation with real progress
-4. **Show generated skill** — markdown appears with correct steps
-5. **Edit a step** — change the email address in the markdown, show flow updates
-6. **Press Replay** — watch the agent fill out the form automatically with the edited values
-7. **Mic drop** — "You showed it once. It runs forever."
-
----
-
-## 12. Future Scope (Post-Hackathon)
-
-- **Skill library**: save and share skills across teams
-- **Parameterization**: turn hardcoded values into variables (e.g. email becomes `{{user_email}}`)
-- **Branching logic**: conditional steps (if validation fails → do X)
-- **Multi-page workflows**: complex flows across multiple applications
-- **Scheduled execution**: run skills on a cron schedule
-- **Error recovery**: automatic retry and fallback strategies
-- **Skill composition**: chain multiple skills into larger workflows
-- **Natural language editing**: "change step 3 to use a different email" via chat
+1. **Open the app** — clean two-panel UI, empty session
+2. **Drag the recording** into the prompt box, type: `"use /video-frame-reader on this and create SKILL.md"`
+3. **Left panel streams** — tool pills show frame extraction, vision analysis running
+4. **Right panel fills in** — SKILL.md appears step by step as Claude writes it
+5. **Type a correction** — `"step 3 is wrong, the user scrolled before clicking"` — Claude edits SKILL.md, right panel updates
+6. **Type `"replay the workflow"`** — left panel shows Claude invoking browser-tools, Chrome executes the steps live
+7. **Mic drop** — "You showed it once. The AI watched it. Now it runs forever."
 
 ---
 
 ## 13. Success Criteria (Hackathon)
 
-- [ ] User can record a screen demo and upload it
-- [ ] System extracts frames and generates a skill markdown in < 60 seconds
-- [ ] Skill is displayed as editable markdown with a visual flow diagram
-- [ ] User can edit steps in the markdown
-- [ ] Agent can replay at least a simple form-filling workflow end-to-end
-- [ ] The whole flow works in a live demo without manual intervention
+- [ ] User can attach a video and get `SKILL.md` generated via Claude Code + `/video-frame-reader`
+- [ ] Left panel streams Claude Code output in real-time (tool pills, assistant text)
+- [ ] Right panel shows `SKILL.md` content, updating as Claude writes it
+- [ ] User can type a correction in the prompt and Claude updates `SKILL.md`
+- [ ] `"replay the workflow"` prompt causes Claude to use `browser-tools` to execute the skill in Chrome
+- [ ] Full flow works end-to-end in a live demo without touching the terminal

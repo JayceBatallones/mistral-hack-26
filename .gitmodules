@@ -1,0 +1,6 @@
+[submodule "pi-skills"]
+	path = pi-skills
+	url = https://github.com/badlogic/pi-skills
+[submodule "Manimate"]
+	path = Manimate
+	url = git@github.com:Yusuke710/Manimate.git
