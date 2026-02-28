@@ -14,6 +14,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
+import { PanelLeftOpen, PanelLeftClose, MessageSquare, MessageSquareOff } from 'lucide-react'
 import type { ChatMessage, Session, SSEEvent, WorkflowStep } from '@/lib/types'
 
 function mkMsg(partial: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
@@ -44,6 +45,8 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   )
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([])
   const [activeStepIndex, setActiveStepIndex] = useState(-1)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [chatOpen, setChatOpen] = useState(true)
 
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const streamGenRef = useRef(0)
@@ -374,50 +377,90 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
       activeStepIndex={activeStepIndex}
       markdown={skillContent ?? undefined}
       onRun={skillContent ? handleRunWorkflow : undefined}
+      isRunning={isRunning}
+      onStop={handleStop}
     />
   )
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
-      <SessionSidebar
-        sessions={sessions}
-        activeId={activeSessionId}
-        onSelect={switchSession}
-        onNew={createNewSession}
-      />
+      {sidebarOpen ? (
+        <SessionSidebar
+          sessions={sessions}
+          activeId={activeSessionId}
+          onSelect={switchSession}
+          onNew={createNewSession}
+          onCollapse={() => setSidebarOpen(false)}
+        />
+      ) : (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="flex items-center justify-center w-10 shrink-0 border-r border-border bg-background hover:bg-secondary transition-colors"
+          title="Open sessions sidebar"
+        >
+          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
 
       {/* Main content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={45} minSize={25}>
+        {chatOpen && (
+          <>
+            <ResizablePanel defaultSize={45} minSize={25}>
+              <div className="flex flex-col h-full">
+                {/* Panel header */}
+                <div className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-node-verify/60" />
+                  <span className="text-xs text-muted-foreground font-medium">SkillForge</span>
+                  {isRunning && (
+                    <span className="text-xs text-primary animate-pulse">running…</span>
+                  )}
+                  <button
+                    onClick={() => setChatOpen(false)}
+                    className="ml-auto p-1 rounded hover:bg-secondary transition-colors"
+                    title="Hide chat panel"
+                  >
+                    <MessageSquareOff className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+
+                <ChatPanel messages={messages} isRunning={isRunning} />
+
+                <ChatInput
+                  onSend={handleSend}
+                  onStop={handleStop}
+                  isRunning={isRunning}
+                  sessionId={activeSessionId}
+                  onVideoUploaded={(path, name) => setAttachedVideo({ path, name })}
+                  attachedVideo={attachedVideo}
+                  onClearVideo={() => setAttachedVideo(null)}
+                />
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+          </>
+        )}
+
+        <ResizablePanel defaultSize={chatOpen ? 55 : 100} minSize={25}>
           <div className="flex flex-col h-full">
-            {/* Panel header */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-border shrink-0">
-              <div className="w-2 h-2 rounded-full bg-node-verify/60" />
-              <span className="text-xs text-muted-foreground font-medium">Claude Code</span>
-              {isRunning && (
-                <span className="text-xs text-primary animate-pulse">running…</span>
-              )}
+            {!chatOpen && (
+              <div className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
+                <button
+                  onClick={() => setChatOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="Show chat panel"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  Chat
+                </button>
+              </div>
+            )}
+            <div className="flex-1 min-h-0">
+              {renderRightPanel()}
             </div>
-
-            <ChatPanel messages={messages} isRunning={isRunning} />
-
-            <ChatInput
-              onSend={handleSend}
-              onStop={handleStop}
-              isRunning={isRunning}
-              sessionId={activeSessionId}
-              onVideoUploaded={(path, name) => setAttachedVideo({ path, name })}
-              attachedVideo={attachedVideo}
-              onClearVideo={() => setAttachedVideo(null)}
-            />
           </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={55} minSize={25}>
-          {renderRightPanel()}
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

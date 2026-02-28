@@ -20,6 +20,7 @@ import {
   Eye,
   FileCode,
   Play as PlayIcon,
+  Square,
   Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -89,9 +90,9 @@ function buildPath(from: Pt, to: Pt): string {
 interface DragInfo { offX: number; offY: number }
 
 /* ── main export ── */
-interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void }
+interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void; isRunning?: boolean; onStop?: () => void }
 
-export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun }: WorkflowNodesProps) {
+export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunning, onStop }: WorkflowNodesProps) {
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview")
   const contentRef = useRef<HTMLDivElement>(null)
   const nodeElsRef = useRef<Record<string, HTMLDivElement | null>>({})
@@ -196,11 +197,11 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun }: Workf
   return (
     <div className="flex h-full flex-col">
       {/* header */}
-      <div className="relative flex items-center border-b border-border bg-background px-4 py-3">
+      <div className="relative flex items-center border-b border-border bg-background px-4 h-10 shrink-0">
         {/* left – title */}
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-primary" />
-          <h2 className="text-sm font-semibold text-foreground">Workflow Steps</h2>
+          <h2 className="text-xs font-medium text-foreground">Workflow Steps</h2>
         </div>
 
         {/* centre – view toggle */}
@@ -245,7 +246,15 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun }: Workf
                 <RotateCcw className="h-3 w-3" />
                 Reset
               </button>
-              {onRun && (
+              {isRunning && onStop ? (
+                <button
+                  onClick={onStop}
+                  className="flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                >
+                  <Square className="h-3 w-3" />
+                  Stop
+                </button>
+              ) : onRun && (
                 <button
                   onClick={onRun}
                   className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
