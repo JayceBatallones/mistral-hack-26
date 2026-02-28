@@ -495,6 +495,11 @@ export default function SkillForge() {
   const streamGenRef = useRef(0)
   // Fix #3: container ref for correct divider math
   const bodyRef = useRef<HTMLDivElement>(null)
+  // Always-current messages ref so callbacks can read latest messages without stale closure
+  const messagesRef = useRef<ChatMessage[]>([])
+
+  // Keep messagesRef in sync with state
+  useEffect(() => { messagesRef.current = messages }, [messages])
 
   // ── Session init ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -503,6 +508,8 @@ export default function SkillForge() {
     if (sid) {
       setActiveSessionId(sid)
       fetchSessions()
+      loadSessionMessages(sid)
+      fetchSkillMd(sid)
     } else {
       createNewSession()
     }
@@ -512,6 +519,15 @@ export default function SkillForge() {
     const res = await fetch('/api/sessions')
     const data: Session[] = await res.json()
     setSessions(data)
+  }
+
+  const loadSessionMessages = async (sid: string) => {
+    const res = await fetch(`/api/sessions/${sid}`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      setMessages(data.messages)
+    }
   }
 
   const createNewSession = async () => {
@@ -532,7 +548,7 @@ export default function SkillForge() {
     return session.id
   }
 
-  const switchSession = (id: string) => {
+  const switchSession = async (id: string) => {
     if (isRunning) return
     setActiveSessionId(id)
     setMessages([])
@@ -541,6 +557,9 @@ export default function SkillForge() {
     const url = new URL(window.location.href)
     url.searchParams.set('session', id)
     window.history.pushState({}, '', url)
+    await loadSessionMessages(id)
+    // Also restore SKILL.md if present
+    fetchSkillMd(id)
   }
 
   // ── Fetch SKILL.md ────────────────────────────────────────────────────
@@ -592,6 +611,12 @@ export default function SkillForge() {
       if (streamGenRef.current === myGen) {
         setIsRunning(false)
         readerRef.current = null
+        // Persist messages to server so they survive page reload
+        void fetch(`/api/sessions/${sessionId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: messagesRef.current }),
+        })
       }
     }
   }, [])
@@ -660,15 +685,18 @@ export default function SkillForge() {
     if (!sid) sid = (await createNewSession()) ?? ''
     if (!sid) return
 
-    // Add user message
-    setMessages((prev) => [
-      ...prev,
-      mkMsg({
-        role: 'user',
-        content: prompt,
-        video_name: attachedVideo?.name,
-      }),
-    ])
+    // Add user message and immediately persist (survives cancel)
+    const userMsg = mkMsg({ role: 'user', content: prompt, video_name: attachedVideo?.name })
+    setMessages((prev) => {
+      const next = [...prev, userMsg]
+      messagesRef.current = next
+      void fetch(`/api/sessions/${sid}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: next }),
+      })
+      return next
+    })
 
     setIsRunning(true)
 
