@@ -40,9 +40,8 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [skillContent, setSkillContent] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
-  const [attachedVideo, setAttachedVideo] = useState<{ path: string; name: string } | null>(
-    initialVideoPath ? { path: initialVideoPath, name: initialVideoName } : null
-  )
+  const [attachedVideo, setAttachedVideo] = useState<{ path: string; name: string } | null>(null)
+  const videoInitializedRef = useRef(false)
   const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([])
   const [activeStepIndex, setActiveStepIndex] = useState(-1)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -58,6 +57,15 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const { setHasMarkdown } = useViewMode()
 
   useEffect(() => { messagesRef.current = messages }, [messages])
+
+  // Sync attachedVideo from URL params — useSearchParams inside Suspense may
+  // return empty on the first render, so useState initializer is unreliable.
+  useEffect(() => {
+    if (!videoInitializedRef.current && initialVideoPath) {
+      videoInitializedRef.current = true
+      setAttachedVideo({ path: initialVideoPath, name: initialVideoName })
+    }
+  }, [initialVideoPath, initialVideoName])
 
   // Update workflow steps when skill content changes
   useEffect(() => {
