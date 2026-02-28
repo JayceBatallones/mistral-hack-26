@@ -50,9 +50,11 @@ export function ChatInput({
   }, [text])
 
   const handleSend = () => {
+    if (isRunning) return
     const trimmed = text.trim()
-    if (!trimmed || isRunning) return
-    onSend(trimmed)
+    const prompt = trimmed || (attachedVideo ? 'Use /video-frame-reader to analyze the attached video and generate a SKILL.md' : '')
+    if (!prompt) return
+    onSend(prompt)
     setText('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
@@ -352,7 +354,7 @@ export function ChatInput({
           ) : (
             <button
               onClick={handleSend}
-              disabled={!text.trim() || isRecording}
+              disabled={(!text.trim() && !attachedVideo) || isRecording}
               className="shrink-0 p-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Send"
             >

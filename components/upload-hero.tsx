@@ -28,7 +28,7 @@ export function UploadHero() {
       const uploadData = await uploadRes.json()
 
       if (uploadData.path) {
-        router.push(`/skills/${session.id}?video_path=${encodeURIComponent(uploadData.path)}&video_name=${encodeURIComponent(uploadData.name)}&auto_start=true`)
+        router.push(`/skills/${session.id}?video_path=${encodeURIComponent(uploadData.path)}&video_name=${encodeURIComponent(uploadData.name)}`)
       }
     } catch {
       setIsUploading(false)
