@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(npx next:*)",
+      "Bash(npx:*)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)",
+      "Bash(git:*)",
+      "Bash(rm:*)"
+    ]
+  }
+}
