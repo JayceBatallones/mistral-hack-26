@@ -21,6 +21,10 @@ venv/
 # Next.js
 .next/
 out/
+tsconfig.tsbuildinfo
+
+# Session workspaces (runtime data)
+workspaces/
 
 # Env
 .env

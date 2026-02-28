@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --color-surface-0: #080808;
+  --color-surface-1: #0f0f0f;
+  --color-surface-2: #161616;
+  --color-surface-3: #1f1f1f;
+  --color-border: #262626;
+  --color-border-subtle: #1a1a1a;
+  --color-accent: #6366f1;
+  --color-accent-dim: #4338ca;
+  --animate-fade-in: fadeIn 0.2s ease-out;
+  --animate-slide-up: slideUp 0.25s ease-out;
+  --animate-pulse-dot: pulseDot 1.5s ease-in-out infinite;
+  --keyframes-fadeIn: { from { opacity: 0 } to { opacity: 1 } };
+  --keyframes-slideUp: { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } };
+  --keyframes-pulseDot: { 0%, 100% { opacity: 0.4 } 50% { opacity: 1 } };
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+:root {
+  --panel-border: #1f1f1f;
+  --scrollbar-track: #0f0f0f;
+  --scrollbar-thumb: #2a2a2a;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+body {
+  background: #080808;
+  color: #e2e2e2;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Prose styles for markdown in right panel */
+.prose-skillforge {
+  color: #d4d4d4;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.prose-skillforge h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1f1f1f;
+}
+
+.prose-skillforge h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-skillforge h3 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #d4d4d4;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.prose-skillforge p {
+  margin-bottom: 0.75rem;
+}
+
+.prose-skillforge ul,
+.prose-skillforge ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.prose-skillforge li {
+  margin-bottom: 0.3rem;
+}
+
+.prose-skillforge ol {
+  list-style-type: decimal;
+}
+
+.prose-skillforge ul {
+  list-style-type: disc;
+}
+
+.prose-skillforge code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  background: #1a1a1a;
+  color: #a78bfa;
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+  border: 1px solid #2a2a2a;
+}
+
+.prose-skillforge pre {
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+
+.prose-skillforge pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #d4d4d4;
+}
+
+.prose-skillforge blockquote {
+  border-left: 2px solid #6366f1;
+  padding-left: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.75rem;
+}
+
+.prose-skillforge a {
+  color: #818cf8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Input focus glow */
+.input-glow:focus-within {
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4), 0 4px 20px rgba(99, 102, 241, 0.08);
+}
