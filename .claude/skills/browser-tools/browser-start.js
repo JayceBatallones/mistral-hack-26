@@ -3,15 +3,6 @@
 import { spawn, execSync } from "node:child_process";
 import puppeteer from "puppeteer-core";
 
-const useProfile = process.argv[2] === "--profile";
-
-if (process.argv[2] && process.argv[2] !== "--profile") {
-	console.log("Usage: browser-start.js [--profile]");
-	console.log("\nOptions:");
-	console.log("  --profile  Copy your default Chrome profile (cookies, logins)");
-	process.exit(1);
-}
-
 import { existsSync, mkdirSync, unlinkSync, cpSync } from "node:fs";
 import { join } from "node:path";
 
@@ -38,25 +29,23 @@ for (const lockFile of ["SingletonLock", "SingletonSocket", "SingletonCookie"]) 
 	try { unlinkSync(join(SCRAPING_DIR, lockFile)); } catch {}
 }
 
-if (useProfile) {
-	console.log("Syncing profile...");
-	const sourceProfile = isWin
-		? join(HOME, "AppData", "Local", "Google", "Chrome", "User Data")
-		: join(HOME, "Library", "Application Support", "Google", "Chrome");
-	if (existsSync(sourceProfile)) {
-		cpSync(sourceProfile, SCRAPING_DIR, {
-			recursive: true,
-			force: true,
-			filter: (src) => {
-				const name = src.split(/[\\/]/).pop();
-				return !["SingletonLock", "SingletonSocket", "SingletonCookie",
-					"Sessions", "Current Session", "Current Tabs",
-					"Last Session", "Last Tabs"].includes(name);
-			},
-		});
-	} else {
-		console.log("⚠ Chrome profile not found at:", sourceProfile);
-	}
+console.log("Syncing profile...");
+const sourceProfile = isWin
+	? join(HOME, "AppData", "Local", "Google", "Chrome", "User Data")
+	: join(HOME, "Library", "Application Support", "Google", "Chrome");
+if (existsSync(sourceProfile)) {
+	cpSync(sourceProfile, SCRAPING_DIR, {
+		recursive: true,
+		force: true,
+		filter: (src) => {
+			const name = src.split(/[\\/]/).pop();
+			return !["SingletonLock", "SingletonSocket", "SingletonCookie",
+				"Sessions", "Current Session", "Current Tabs",
+				"Last Session", "Last Tabs"].includes(name);
+		},
+	});
+} else {
+	console.log("⚠ Chrome profile not found at:", sourceProfile);
 }
 
 // Determine Chrome executable path
@@ -109,4 +98,4 @@ if (!connected) {
 	process.exit(1);
 }
 
-console.log(`✓ Chrome started on :9222${useProfile ? " with your profile" : ""}`);
+console.log("✓ Chrome started on :9222 with your profile");
