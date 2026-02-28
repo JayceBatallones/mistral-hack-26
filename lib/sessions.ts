@@ -12,7 +12,11 @@ declare global {
 const sessions: Map<string, Session> =
   globalThis.__sf_sessions ?? (globalThis.__sf_sessions = new Map())
 
-const WORKSPACES_DIR = path.join(process.cwd(), 'workspaces')
+// Default: <project-root>/workspaces. Override with SKILLFORGE_WORKSPACES_DIR env var.
+export const WORKSPACES_DIR =
+  process.env.SKILLFORGE_WORKSPACES_DIR
+    ? path.resolve(process.env.SKILLFORGE_WORKSPACES_DIR)
+    : path.join(process.cwd(), 'workspaces')
 
 export function createSession(): Session {
   const id = randomUUID()
