@@ -88,7 +88,7 @@ export function UploadHero() {
           <span className="italic text-[var(--color-ink-light)]">to mimic your workflow</span>
         </h1>
         <p className="mx-auto max-w-lg text-pretty text-lg leading-relaxed text-[var(--color-ink-light)]">
-          Record your screen, upload the video, and Mimi writes a SKILL.md that Claude can replay &mdash; no code needed.
+          Just record your screen and upload. No code needed.
         </p>
       </div>
 

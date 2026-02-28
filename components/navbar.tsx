@@ -50,7 +50,7 @@ export function Navbar() {
                 : "text-[var(--color-ink-light)] hover:text-[var(--color-ink)]"
             )}
           >
-            Skills
+            Workflows
           </Link>
         </div>
 

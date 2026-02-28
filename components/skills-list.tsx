@@ -39,7 +39,7 @@ export function SkillsListContainer() {
         <div className="mb-2 flex items-center gap-2">
           <Layers className="h-5 w-5 text-primary" />
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Skills Library
+            Workflows Library
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
