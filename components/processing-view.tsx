@@ -14,7 +14,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { PanelLeftOpen, PanelLeftClose, MessageSquare, MessageSquareOff } from 'lucide-react'
+import { MessageSquareOff } from 'lucide-react'
 import type { ChatMessage, Session, SSEEvent, WorkflowStep } from '@/lib/types'
 
 function mkMsg(partial: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
@@ -46,6 +46,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const [activeStepIndex, setActiveStepIndex] = useState(-1)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(true)
+  const [workflowFullscreen, setWorkflowFullscreen] = useState(false)
   const [stepStatuses, setStepStatuses] = useState<Record<number, 'success' | 'error'>>({})
   const activeStepIndexRef = useRef(-1)
 
@@ -410,6 +411,19 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     handleSend('Run the workflow defined in SKILL.md using /browser-tools')
   }, [isRunning, skillContent, handleSend])
 
+  const handleToggleFullscreen = useCallback(() => {
+    setWorkflowFullscreen(prev => {
+      if (!prev) {
+        setSidebarOpen(false)
+        setChatOpen(false)
+      } else {
+        setSidebarOpen(true)
+        setChatOpen(true)
+      }
+      return !prev
+    })
+  }, [])
+
   const renderRightPanel = () => (
     <WorkflowNodes
       steps={workflowSteps}
@@ -419,13 +433,15 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
       isRunning={isRunning}
       onStop={handleStop}
       stepStatuses={stepStatuses}
+      isFullscreen={workflowFullscreen}
+      onToggleFullscreen={handleToggleFullscreen}
     />
   )
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
-      {sidebarOpen ? (
+      {sidebarOpen && (
         <SessionSidebar
           sessions={sessions}
           activeId={activeSessionId}
@@ -433,25 +449,6 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
           onNew={createNewSession}
           onCollapse={() => setSidebarOpen(false)}
         />
-      ) : (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex items-center justify-center w-10 shrink-0 border-r border-border bg-background hover:bg-secondary transition-colors"
-          title="Open sessions sidebar"
-        >
-          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
-        </button>
-      )}
-
-      {/* Collapsed chat strip */}
-      {!chatOpen && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="flex flex-col items-center justify-center w-10 shrink-0 border-r border-border bg-background hover:bg-secondary transition-colors"
-          title="Open chat panel"
-        >
-          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-        </button>
       )}
 
       {/* Main content */}

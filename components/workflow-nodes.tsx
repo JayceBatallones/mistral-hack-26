@@ -23,6 +23,8 @@ import {
   Square,
   Download,
   XCircle,
+  Maximize2,
+  Minimize2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { WorkflowStep, StepStatus } from "@/lib/types"
@@ -174,9 +176,9 @@ function buildPath(from: Pt, to: Pt): string {
 interface DragInfo { offX: number; offY: number }
 
 /* ── main export ── */
-interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void; isRunning?: boolean; onStop?: () => void; stepStatuses?: Record<number, 'success' | 'error'> }
+interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void; isRunning?: boolean; onStop?: () => void; stepStatuses?: Record<number, 'success' | 'error'>; isFullscreen?: boolean; onToggleFullscreen?: () => void }
 
-export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunning, onStop, stepStatuses = {} }: WorkflowNodesProps) {
+export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunning, onStop, stepStatuses = {}, isFullscreen, onToggleFullscreen }: WorkflowNodesProps) {
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview")
   const contentRef = useRef<HTMLDivElement>(null)
   const nodeElsRef = useRef<Record<string, HTMLDivElement | null>>({})
@@ -397,16 +399,26 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
       {/* scrollable canvas */}
       <div className={cn("relative flex-1 overflow-auto dot-grid-bg", viewMode === "markdown" && "hidden")}>
-        {/* Floating reset button */}
+        {/* Floating action buttons — sticky so they stay visible while scrolling */}
         {viewMode === "preview" && steps.length > 0 && (
-          <button
-            onClick={handleReset}
-            className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg border border-border bg-background/80 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shadow-sm"
-            title="Reset positions"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Reset
-          </button>
+          <div className="sticky top-3 z-10 flex justify-end gap-1.5 px-3 pointer-events-none" style={{ marginBottom: "-2rem" }}>
+            <button
+              onClick={handleReset}
+              className="pointer-events-auto flex items-center justify-center rounded-lg border border-border bg-background/80 backdrop-blur-sm p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shadow-sm"
+              title="Reset positions"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            {onToggleFullscreen && (
+              <button
+                onClick={onToggleFullscreen}
+                className="pointer-events-auto flex items-center justify-center rounded-lg border border-border bg-background/80 backdrop-blur-sm p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shadow-sm"
+                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
+            )}
+          </div>
         )}
         <div ref={contentRef} className="relative min-h-full">
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" style={{ zIndex: 2 }}>
