@@ -104,31 +104,46 @@ Keyframe extraction complete:
 Proceed with frame analysis?
 ```
 
-### 5. Invoke Subagent After Approval
+### 5. Invoke Parallel Subagents After Approval
 
-After user approval, invoke subagent using Task tool:
+After user approval, split the frame list into 4 sequential chunks and spawn
+all 4 Task subagents **in a single message** so they run in parallel:
 
 ```
-Task(
-  subagent_type="general-purpose",
-  model="haiku",
-  description="Frame analysis",
+# Split files array into 4 equal chunks, then call all 4 in one message:
+
+Task(subagent_type="general-purpose", model="haiku", description="Frames 1/4",
   prompt="""
-[User Intent]
-{Intent captured in Step 1}
+User intent: {Intent from Step 1}
 
-[Frame Image Files]
-{List of paths from files array}
+Analyze these sequential video frames in order and summarize key actions,
+screens, and anything relevant to the user's intent:
+{chunk 1 paths, one per line}
+""")
 
-Analyze the above frame images and identify issues/behaviors according to the user's intent.
-"""
-)
+Task(subagent_type="general-purpose", model="haiku", description="Frames 2/4",
+  prompt="""
+User intent: {Intent from Step 1}
+
+Analyze these sequential video frames in order and summarize key actions,
+screens, and anything relevant to the user's intent:
+{chunk 2 paths, one per line}
+""")
+
+Task(subagent_type="general-purpose", model="haiku", description="Frames 3/4",
+  prompt="""...""")
+
+Task(subagent_type="general-purpose", model="haiku", description="Frames 4/4",
+  prompt="""...""")
 ```
+
+Once all 4 subagents return, merge their summaries into a final report.
 
 Benefits of this approach:
-- ✅ User intent is included in analysis context
-- ✅ Subagent can focus on intent-specific efficient analysis
-- ✅ Processed in independent context for better token efficiency
+- ✅ 4× faster than sequential analysis
+- ✅ Each subagent has temporal context across its chunk
+- ✅ User intent threaded through every subagent
+- ✅ No extra scripts or API keys needed
 
 ## Options
 
