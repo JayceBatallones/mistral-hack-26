@@ -412,7 +412,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
                 {/* Panel header */}
                 <div className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
                   <div className="w-2 h-2 rounded-full bg-node-verify/60" />
-                  <span className="text-xs text-muted-foreground font-medium">SkillForge</span>
+                  <span className="text-xs text-muted-foreground font-medium">Mimi</span>
                   {isRunning && (
                     <span className="text-xs text-primary animate-pulse">running…</span>
                   )}

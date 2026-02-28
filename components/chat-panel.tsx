@@ -294,7 +294,7 @@ export function ChatPanel({
         if (msg.role === 'user') {
           return (
             <div key={msg.id} className="flex justify-end animate-slide-up">
-              <div className="max-w-[85%] bg-primary/15 border border-primary/25 rounded-xl rounded-br-sm px-3.5 py-2.5">
+              <div className="max-w-[85%] bg-[var(--color-accent-sand)]/10 border border-[var(--color-accent-sand)]/25 rounded-xl rounded-br-sm px-3.5 py-2.5">
                 {msg.video_name && (
                   <div className="flex items-center gap-1.5 mb-2 text-primary text-xs font-mono">
                     <Video className="w-3.5 h-3.5" />
@@ -310,7 +310,7 @@ export function ChatPanel({
         // assistant
         return (
           <div key={msg.id} className="animate-slide-up">
-            <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+            <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-2 border-[var(--color-accent-sage)]/40 pl-3">
               {msg.content}
               {isRunning && msg.id === lastAssistantId && (
                 <span className="inline-block w-[2px] h-4 bg-primary ml-0.5 animate-[pulseDot_1s_ease-in-out_infinite] align-middle" />

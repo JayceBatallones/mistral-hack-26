@@ -364,13 +364,14 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
             {steps.map((step, idx) => {
               const isActive = idx === activeStepIndex
               const isCompleted = idx < activeStepIndex
+              const dimmed = activeStepIndex >= 0 && !isActive && !isCompleted
 
               if (step.branches && step.branches.length > 0) {
                 return (
                   <div key={step.id} className="flex items-start justify-center gap-6">
                     {step.branches.map(b => (
                       <DraggableCard key={b.id} step={b} isActive={isActive} isCompleted={isCompleted}
-                        compact setRef={setNodeRef(b.id)} onDrag={(dx, dy) => handleDrag(b.id, dx, dy)} />
+                        dimmed={dimmed} compact setRef={setNodeRef(b.id)} onDrag={(dx, dy) => handleDrag(b.id, dx, dy)} />
                     ))}
                   </div>
                 )
@@ -378,7 +379,7 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
               return (
                 <DraggableCard key={step.id} step={step} isActive={isActive} isCompleted={isCompleted}
-                  setRef={setNodeRef(step.id)} onDrag={(dx, dy) => handleDrag(step.id, dx, dy)} />
+                  dimmed={dimmed} setRef={setNodeRef(step.id)} onDrag={(dx, dy) => handleDrag(step.id, dx, dy)} />
               )
             })}
 
@@ -397,9 +398,9 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
 /* ── Draggable card ── */
 function DraggableCard({
-  step, isActive, isCompleted, compact, setRef, onDrag,
+  step, isActive, isCompleted, dimmed, compact, setRef, onDrag,
 }: {
-  step: WorkflowStep; isActive: boolean; isCompleted: boolean; compact?: boolean
+  step: WorkflowStep; isActive: boolean; isCompleted: boolean; dimmed?: boolean; compact?: boolean
   setRef: (el: HTMLDivElement | null) => void; onDrag: (dx: number, dy: number) => void
 }) {
   const c = typeColor[step.type]
@@ -429,12 +430,13 @@ function DraggableCard({
       ref={setRef}
       data-node-id={step.id}
       className={cn(
-        "inline-flex touch-none select-none items-center gap-3 rounded-2xl border transition-shadow duration-200",
+        "inline-flex touch-none select-none items-center gap-3 rounded-2xl border transition-all duration-200",
         compact ? "px-3 py-2.5" : "px-4 py-3",
         isActive ? `${c.border} ${c.bg} shadow-lg shadow-primary/5`
           : isCompleted ? "border-primary/15 bg-primary/5"
           : "border-border bg-card",
         "cursor-grab active:cursor-grabbing",
+        dimmed && "opacity-35",
       )}
       style={{ willChange: "transform" }}
       onPointerDown={down}

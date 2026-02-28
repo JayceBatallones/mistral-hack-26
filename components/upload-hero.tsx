@@ -76,7 +76,10 @@ export function UploadHero() {
   )
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-6 pb-24">
+    <div
+      className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-6 pb-24"
+      style={{ backgroundImage: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, color-mix(in srgb, var(--color-stone) 50%, transparent) 100%)' }}
+    >
       {/* Greeting section */}
       <div className="mb-12 text-center">
         <h1 className="mb-5 text-balance text-4xl font-medium tracking-tight text-[var(--color-ink)] md:text-5xl lg:text-6xl font-serif leading-tight">
@@ -92,12 +95,11 @@ export function UploadHero() {
       {/* Upload zone */}
       <div
         className={cn(
-          "group relative w-full max-w-2xl cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300",
+          "group relative w-full max-w-2xl cursor-pointer p-12 text-center transition-all duration-300",
+          "hand-drawn-border",
           isUploading && "pointer-events-none opacity-60",
-          isDragging
-            ? "border-[var(--color-ink)] bg-[var(--color-paper)] shadow-[0_0_30px_-5px] shadow-[var(--color-accent-sand)]/40"
-            : "border-[var(--color-stone)] bg-[var(--color-paper)] hover:border-[var(--color-accent-sand)]"
         )}
+        style={isDragging ? { boxShadow: 'var(--shadow-sketch-hover), 0 0 28px -4px var(--color-accent-sand)' } : undefined}
         onDrag={handleDrag}
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
