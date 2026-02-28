@@ -46,6 +46,8 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const [activeStepIndex, setActiveStepIndex] = useState(-1)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(true)
+  const [stepStatuses, setStepStatuses] = useState<Record<number, 'success' | 'error'>>({})
+  const activeStepIndexRef = useRef(-1)
 
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const streamGenRef = useRef(0)
@@ -57,6 +59,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const { setHasMarkdown } = useViewMode()
 
   useEffect(() => { messagesRef.current = messages }, [messages])
+  useEffect(() => { activeStepIndexRef.current = activeStepIndex }, [activeStepIndex])
 
   // Sync attachedVideo from URL params — useSearchParams inside Suspense may
   // return empty on the first render, so useState initializer is unreliable.
@@ -95,6 +98,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
       setSkillContent(null)
       setWorkflowSteps([])
       setActiveStepIndex(-1)
+      setStepStatuses({})
       setAttachedVideo(null)
       autoStartedRef.current = false
       loadSessionMessages(propSessionId)
@@ -136,6 +140,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     setAttachedVideo(null)
     setWorkflowSteps([])
     setActiveStepIndex(-1)
+    setStepStatuses({})
     setHasMarkdown(false)
     if (isSkillsRoute) {
       router.push(`/skills/${session.id}`)
@@ -157,6 +162,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     setAttachedVideo(null)
     setWorkflowSteps([])
     setActiveStepIndex(-1)
+    setStepStatuses({})
     setHasMarkdown(false)
     if (isSkillsRoute) {
       router.push(`/skills/${id}`)
@@ -244,7 +250,19 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
         {
           const stepMatch = event.message.match(/[Ss]tep\s+(\d+)/)
           if (stepMatch) {
-            setActiveStepIndex(parseInt(stepMatch[1]) - 1)
+            const newIdx = parseInt(stepMatch[1]) - 1
+            const prevIdx = activeStepIndexRef.current
+            // Mark all previous steps as success when advancing
+            if (newIdx > prevIdx) {
+              setStepStatuses(prev => {
+                const next = { ...prev }
+                for (let i = Math.max(0, prevIdx); i < newIdx; i++) {
+                  if (!next[i]) next[i] = 'success'
+                }
+                return next
+              })
+            }
+            setActiveStepIndex(newIdx)
           }
         }
         break
@@ -273,6 +291,10 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
           tool_id: event.tool_use_id,
           is_error: event.is_error,
         })
+        // Mark current step as error if tool_result has is_error
+        if (event.is_error && activeStepIndexRef.current >= 0) {
+          setStepStatuses(prev => ({ ...prev, [activeStepIndexRef.current]: 'error' }))
+        }
         // Refetch SKILL.md once the write/edit has actually completed
         if (pendingSkillWriteIds.current.has(event.tool_use_id)) {
           pendingSkillWriteIds.current.delete(event.tool_use_id)
@@ -287,6 +309,14 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
         break
 
       case 'complete':
+        // Mark the final step as success if not already error
+        if (activeStepIndexRef.current >= 0) {
+          setStepStatuses(prev => {
+            const idx = activeStepIndexRef.current
+            if (!prev[idx]) return { ...prev, [idx]: 'success' }
+            return prev
+          })
+        }
         setIsRunning(false)
         fetchSkillMd(sessionId)
         break
@@ -376,6 +406,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   const handleRunWorkflow = useCallback(() => {
     if (isRunning || !skillContent) return
     setActiveStepIndex(0)
+    setStepStatuses({})
     handleSend('Run the workflow defined in SKILL.md using /browser-tools')
   }, [isRunning, skillContent, handleSend])
 
@@ -387,6 +418,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
       onRun={skillContent ? handleRunWorkflow : undefined}
       isRunning={isRunning}
       onStop={handleStop}
+      stepStatuses={stepStatuses}
     />
   )
 
@@ -408,6 +440,17 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
           title="Open sessions sidebar"
         >
           <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
+
+      {/* Collapsed chat strip */}
+      {!chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="flex flex-col items-center justify-center w-10 shrink-0 border-r border-border bg-background hover:bg-secondary transition-colors"
+          title="Open chat panel"
+        >
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
 
@@ -452,22 +495,8 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
         )}
 
         <ResizablePanel defaultSize={chatOpen ? 55 : 100} minSize={25}>
-          <div className="flex flex-col h-full">
-            {!chatOpen && (
-              <div className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
-                <button
-                  onClick={() => setChatOpen(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  title="Show chat panel"
-                >
-                  <MessageSquare className="h-3 w-3" />
-                  Chat
-                </button>
-              </div>
-            )}
-            <div className="flex-1 min-h-0">
-              {renderRightPanel()}
-            </div>
+          <div className="flex-1 min-h-0 h-full">
+            {renderRightPanel()}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

@@ -42,6 +42,8 @@ export interface WorkflowStep {
   branches?: WorkflowStep[]
 }
 
+export type StepStatus = 'pending' | 'running' | 'success' | 'error'
+
 export interface StackTraceEntry {
   timestamp: string
   level: 'info' | 'success' | 'warn' | 'error' | 'debug'

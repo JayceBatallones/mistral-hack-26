@@ -22,9 +22,10 @@ import {
   Play as PlayIcon,
   Square,
   Download,
+  XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { WorkflowStep } from "@/lib/types"
+import type { WorkflowStep, StepStatus } from "@/lib/types"
 import { MarkdownViewer } from "@/components/markdown-viewer"
 
 /* ── icon / color lookups ── */
@@ -39,6 +40,89 @@ const typeColor: Record<WorkflowStep["type"], { bg: string; border: string; text
   error:    { bg: "bg-node-error/10",    border: "border-node-error/30",    text: "text-node-error",    iconBg: "bg-node-error/20" },
 }
 function getIcon(s: WorkflowStep) { return typeIcon[s.type] ?? Globe }
+
+/* ── known brand logos ── */
+const BRAND_LOGOS: Record<string, string> = {
+  Notion: "/logos/notion.svg",
+}
+
+const BRAND_DOMAINS: Record<string, string> = {
+  Stripe: "stripe.com",
+  Google: "google.com",
+  GitHub: "github.com",
+  Slack: "slack.com",
+  Discord: "discord.com",
+  Twitter: "x.com",
+  LinkedIn: "linkedin.com",
+  Figma: "figma.com",
+  Vercel: "vercel.com",
+  Netflix: "netflix.com",
+  Spotify: "spotify.com",
+  Reddit: "reddit.com",
+  YouTube: "youtube.com",
+  Amazon: "amazon.com",
+  Facebook: "facebook.com",
+  Instagram: "instagram.com",
+  Trello: "trello.com",
+  Jira: "atlassian.com",
+  Asana: "asana.com",
+  Dropbox: "dropbox.com",
+  Zoom: "zoom.us",
+  Salesforce: "salesforce.com",
+  HubSpot: "hubspot.com",
+  Shopify: "shopify.com",
+  Twilio: "twilio.com",
+  Airtable: "airtable.com",
+  Monday: "monday.com",
+  Notion: "notion.so",
+}
+
+/* Build a regex that matches any known brand name (case-insensitive word boundary) */
+const BRAND_NAMES = Object.keys(BRAND_DOMAINS)
+const BRAND_RE = new RegExp(`(${BRAND_NAMES.join("|")})`, "g")
+
+function getBrandLogoUrl(name: string): string {
+  if (BRAND_LOGOS[name]) return BRAND_LOGOS[name]
+  const domain = BRAND_DOMAINS[name]
+  if (domain) return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+  return ""
+}
+
+function InlineLogo({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return null
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="inline-block h-4 w-4 shrink-0 rounded-sm align-text-bottom"
+      style={{ objectFit: "contain" }}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+/** Render step title with inline brand logos before each brand mention */
+function TitleWithLogos({ title }: { title: string }) {
+  const parts = title.split(BRAND_RE)
+  if (parts.length === 1) return <>{title}</>
+  return (
+    <>
+      {parts.map((part, i) => {
+        const logoUrl = getBrandLogoUrl(part)
+        if (logoUrl) {
+          return (
+            <span key={i} className="inline-flex items-center gap-0.5">
+              <InlineLogo src={logoUrl} alt={part} />
+              {part}
+            </span>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
+  )
+}
 
 /* ── types ── */
 type Edge = { fromId: string; toId: string; stepIdx: number }
@@ -90,9 +174,9 @@ function buildPath(from: Pt, to: Pt): string {
 interface DragInfo { offX: number; offY: number }
 
 /* ── main export ── */
-interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void; isRunning?: boolean; onStop?: () => void }
+interface WorkflowNodesProps { steps: WorkflowStep[]; activeStepIndex: number; markdown?: string; onRun?: () => void; isRunning?: boolean; onStop?: () => void; stepStatuses?: Record<number, 'success' | 'error'> }
 
-export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunning, onStop }: WorkflowNodesProps) {
+export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunning, onStop, stepStatuses = {} }: WorkflowNodesProps) {
   const [viewMode, setViewMode] = useState<"preview" | "markdown">("preview")
   const contentRef = useRef<HTMLDivElement>(null)
   const nodeElsRef = useRef<Record<string, HTMLDivElement | null>>({})
@@ -264,13 +348,6 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
           {viewMode === "preview" && steps.length > 0 && (
             <>
               <span className="text-xs text-muted-foreground">{displayActive} / {steps.length}</span>
-              <button
-                onClick={handleReset}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Reset
-              </button>
               {isRunning && onStop ? (
                 <button
                   onClick={onStop}
@@ -319,16 +396,18 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
       )}
 
       {/* scrollable canvas */}
-      <div className={cn("relative flex-1 overflow-auto", viewMode === "markdown" && "hidden")}>
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-          <defs>
-            <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="10" cy="10" r="1" className="fill-muted-foreground/20" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#dotGrid)" />
-        </svg>
-
+      <div className={cn("relative flex-1 overflow-auto dot-grid-bg", viewMode === "markdown" && "hidden")}>
+        {/* Floating reset button */}
+        {viewMode === "preview" && steps.length > 0 && (
+          <button
+            onClick={handleReset}
+            className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg border border-border bg-background/80 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground shadow-sm"
+            title="Reset positions"
+          >
+            <RotateCcw className="h-3 w-3" />
+            Reset
+          </button>
+        )}
         <div ref={contentRef} className="relative min-h-full">
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" style={{ zIndex: 2 }}>
             {paths.map(p => (
@@ -365,13 +444,14 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
               const isActive = idx === activeStepIndex
               const isCompleted = idx < activeStepIndex
               const dimmed = activeStepIndex >= 0 && !isActive && !isCompleted
+              const status = stepStatuses[idx]
 
               if (step.branches && step.branches.length > 0) {
                 return (
                   <div key={step.id} className="flex items-start justify-center gap-6">
                     {step.branches.map(b => (
                       <DraggableCard key={b.id} step={b} isActive={isActive} isCompleted={isCompleted}
-                        dimmed={dimmed} compact setRef={setNodeRef(b.id)} onDrag={(dx, dy) => handleDrag(b.id, dx, dy)} />
+                        dimmed={dimmed} compact setRef={setNodeRef(b.id)} onDrag={(dx, dy) => handleDrag(b.id, dx, dy)} status={status} />
                     ))}
                   </div>
                 )
@@ -379,7 +459,7 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
               return (
                 <DraggableCard key={step.id} step={step} isActive={isActive} isCompleted={isCompleted}
-                  dimmed={dimmed} setRef={setNodeRef(step.id)} onDrag={(dx, dy) => handleDrag(step.id, dx, dy)} />
+                  dimmed={dimmed} setRef={setNodeRef(step.id)} onDrag={(dx, dy) => handleDrag(step.id, dx, dy)} status={status} />
               )
             })}
 
@@ -398,10 +478,11 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
 /* ── Draggable card ── */
 function DraggableCard({
-  step, isActive, isCompleted, dimmed, compact, setRef, onDrag,
+  step, isActive, isCompleted, dimmed, compact, setRef, onDrag, status,
 }: {
   step: WorkflowStep; isActive: boolean; isCompleted: boolean; dimmed?: boolean; compact?: boolean
   setRef: (el: HTMLDivElement | null) => void; onDrag: (dx: number, dy: number) => void
+  status?: 'success' | 'error'
 }) {
   const c = typeColor[step.type]
   const I = getIcon(step)
@@ -425,6 +506,35 @@ function DraggableCard({
 
   const up = useCallback(() => { dragging.current = false }, [])
 
+  // Icon box: status icon > type icon
+  const iconSize = compact ? "h-4 w-4" : "h-[18px] w-[18px]"
+  let iconElement: React.ReactNode
+  if (status === 'success') {
+    iconElement = <CheckCircle2 className={cn(iconSize, "text-node-verify")} />
+  } else if (status === 'error') {
+    iconElement = <XCircle className={cn(iconSize, "text-node-error")} />
+  } else {
+    iconElement = <I className={iconSize} />
+  }
+
+  // Card border/bg colors based on status
+  const cardClass = status === 'success'
+    ? "border-node-verify/30 bg-node-verify/5"
+    : status === 'error'
+    ? "border-node-error/30 bg-node-error/5"
+    : isActive ? `${c.border} ${c.bg} shadow-lg shadow-primary/5`
+    : isCompleted ? "border-primary/15 bg-primary/5"
+    : "border-border bg-card"
+
+  // Icon box colors based on status
+  const iconBoxClass = status === 'success'
+    ? "border-node-verify/20 bg-node-verify/10 text-node-verify"
+    : status === 'error'
+    ? "border-node-error/20 bg-node-error/10 text-node-error"
+    : isActive ? `${c.iconBg} ${c.border} ${c.text}`
+    : isCompleted ? "border-primary/20 bg-primary/10 text-primary"
+    : "border-border bg-secondary text-muted-foreground"
+
   return (
     <div
       ref={setRef}
@@ -432,9 +542,7 @@ function DraggableCard({
       className={cn(
         "inline-flex touch-none select-none items-center gap-3 rounded-2xl border transition-all duration-200",
         compact ? "px-3 py-2.5" : "px-4 py-3",
-        isActive ? `${c.border} ${c.bg} shadow-lg shadow-primary/5`
-          : isCompleted ? "border-primary/15 bg-primary/5"
-          : "border-border bg-card",
+        cardClass,
         "cursor-grab active:cursor-grabbing",
         dimmed && "opacity-35",
       )}
@@ -446,22 +554,18 @@ function DraggableCard({
       <div className={cn(
         "flex shrink-0 items-center justify-center rounded-xl border",
         compact ? "h-9 w-9" : "h-10 w-10",
-        isActive ? `${c.iconBg} ${c.border} ${c.text}`
-          : isCompleted ? "border-primary/20 bg-primary/10 text-primary"
-          : "border-border bg-secondary text-muted-foreground",
+        iconBoxClass,
       )}>
-        {isCompleted && !isActive
-          ? <CheckCircle2 className={cn(compact ? "h-4 w-4" : "h-[18px] w-[18px]")} />
-          : <I className={cn(compact ? "h-4 w-4" : "h-[18px] w-[18px]")} />}
+        {iconElement}
       </div>
       <span className={cn(
-        "font-medium leading-tight whitespace-nowrap",
+        "inline-flex items-center gap-1 font-medium leading-tight whitespace-nowrap",
         compact ? "text-xs" : "text-sm",
         isActive ? "text-foreground" : isCompleted ? "text-foreground/80" : "text-muted-foreground",
       )}>
-        {step.title}
+        <TitleWithLogos title={step.title} />
       </span>
-      {isActive && (
+      {isActive && !status && (
         <span className="relative ml-1 flex h-2 w-2 shrink-0">
           <span className={cn("absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75", c.iconBg)} />
           <span className={cn("relative inline-flex h-2 w-2 rounded-full", c.iconBg)} />
