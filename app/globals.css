@@ -4,14 +4,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --color-paper: #FDFCF8;
-  --color-ink: #2A2825;
-  --color-ink-light: #5C5852;
-  --color-stone: #EBE8E1;
-  --color-accent-coral: #E86A58;
-  --color-accent-sage: #8BA88E;
-  --color-accent-sand: #E8C382;
-  --color-accent-sky: #82A2B8;
+  --color-paper: #FAF9F6;
+  --color-ink: #1C1917;
+  --color-ink-light: #57534E;
+  --color-stone: #E7E5E4;
+  --color-accent-coral: #E25D4E;
+  --color-accent-sage: #5B9A6B;
+  --color-accent-sand: #D4A24E;
+  --color-accent-sky: #4A90B8;
 
   --background: var(--color-paper);
   --foreground: var(--color-ink);
@@ -27,7 +27,7 @@
   --muted-foreground: var(--color-ink-light);
   --accent: var(--color-accent-sand);
   --accent-foreground: var(--color-ink);
-  --destructive: #E25C4A;
+  --destructive: #DC3D2A;
   --destructive-foreground: #ffffff;
   --border: var(--color-stone);
   --input: #ffffff;
@@ -51,65 +51,65 @@
   --node-action: var(--color-accent-coral);
   --node-wait: var(--color-accent-sand);
   --node-verify: var(--color-accent-sage);
-  --node-error: #D45A4A;
+  --node-error: #DC3D2A;
 
-  --shadow-soft: 0 16px 40px rgba(42, 40, 37, 0.08);
-  --shadow-sketch: 6px 6px 0 rgba(42, 40, 37, 0.15);
-  --shadow-sketch-hover: 10px 10px 0 rgba(42, 40, 37, 0.15);
+  --shadow-soft: 0 16px 40px rgba(28, 25, 23, 0.06);
+  --shadow-sketch: 6px 6px 0 rgba(28, 25, 23, 0.12);
+  --shadow-sketch-hover: 10px 10px 0 rgba(28, 25, 23, 0.12);
 }
 
 .dark {
-  --color-paper: #171513;
-  --color-ink: #FDFCF8;
-  --color-ink-light: #C8C2BA;
-  --color-stone: #2A2724;
-  --color-accent-coral: #F08A7C;
-  --color-accent-sage: #9EB9A0;
-  --color-accent-sand: #E8C382;
-  --color-accent-sky: #9DB6C8;
+  --color-paper: #0C0A09;
+  --color-ink: #F5F5F4;
+  --color-ink-light: #A8A29E;
+  --color-stone: #1C1917;
+  --color-accent-coral: #F87171;
+  --color-accent-sage: #6EE7A0;
+  --color-accent-sand: #FBBF24;
+  --color-accent-sky: #60A5FA;
 
   --background: var(--color-paper);
   --foreground: var(--color-ink);
-  --card: #1E1B19;
+  --card: #141211;
   --card-foreground: var(--color-ink);
-  --popover: #1E1B19;
+  --popover: #141211;
   --popover-foreground: var(--color-ink);
   --primary: var(--color-ink);
-  --primary-foreground: #1E1B19;
+  --primary-foreground: #0C0A09;
   --secondary: var(--color-stone);
   --secondary-foreground: var(--color-ink);
   --muted: var(--color-stone);
   --muted-foreground: var(--color-ink-light);
   --accent: var(--color-accent-sand);
-  --accent-foreground: #1E1B19;
-  --destructive: #E25C4A;
-  --destructive-foreground: #1E1B19;
-  --border: #2A2724;
-  --input: #1E1B19;
+  --accent-foreground: #0C0A09;
+  --destructive: #F87171;
+  --destructive-foreground: #0C0A09;
+  --border: #1C1917;
+  --input: #141211;
   --ring: var(--color-accent-sand);
   --chart-1: var(--color-accent-coral);
   --chart-2: var(--color-accent-sage);
   --chart-3: var(--color-accent-sky);
   --chart-4: var(--color-accent-sand);
   --chart-5: var(--color-ink-light);
-  --sidebar: #1E1B19;
+  --sidebar: #141211;
   --sidebar-foreground: var(--color-ink);
   --sidebar-primary: var(--color-ink);
-  --sidebar-primary-foreground: #1E1B19;
-  --sidebar-accent: #2A2724;
+  --sidebar-primary-foreground: #0C0A09;
+  --sidebar-accent: #1C1917;
   --sidebar-accent-foreground: var(--color-ink);
-  --sidebar-border: #2A2724;
+  --sidebar-border: #1C1917;
   --sidebar-ring: var(--color-accent-sand);
 
   --node-navigate: var(--color-accent-sky);
   --node-action: var(--color-accent-coral);
   --node-wait: var(--color-accent-sand);
   --node-verify: var(--color-accent-sage);
-  --node-error: #E25C4A;
+  --node-error: #F87171;
 
-  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.35);
-  --shadow-sketch: 6px 6px 0 rgba(0, 0, 0, 0.4);
-  --shadow-sketch-hover: 10px 10px 0 rgba(0, 0, 0, 0.4);
+  --shadow-soft: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --shadow-sketch: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  --shadow-sketch-hover: 10px 10px 0 rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
@@ -171,6 +171,10 @@
 ::selection {
   background: var(--color-accent-sand);
   color: var(--color-ink);
+}
+
+.dark ::selection {
+  color: #0C0A09;
 }
 
 .hand-drawn-border {

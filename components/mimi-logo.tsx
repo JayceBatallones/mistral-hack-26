@@ -51,8 +51,8 @@ export function MimiLogo({ className, ...rest }: React.SVGProps<SVGSVGElement>) 
       </g>
       <defs>
         <linearGradient id="mimiGradient" x1="125.001" y1="12.8516" x2="125.001" y2="236.156" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#322104" />
-          <stop offset="1" stopColor="#3D2707" />
+          <stop stopColor="currentColor" />
+          <stop offset="1" stopColor="currentColor" />
         </linearGradient>
       </defs>
     </svg>

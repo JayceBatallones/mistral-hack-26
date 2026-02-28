@@ -16,52 +16,49 @@ export function Navbar() {
   useEffect(() => setMounted(true), [])
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-stone)] bg-[var(--color-paper)]/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-[var(--color-stone)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
       <nav className="mx-auto grid h-14 max-w-7xl grid-cols-3 items-center px-6">
-        {/* Left: Logo + nav links */}
-        <div className="flex items-center gap-4">
+        {/* Left: Logo */}
+        <div className="flex items-center">
           <Link href="/" className="flex items-center gap-3">
             <MimiLogo className="h-10 w-10 mimi-bounce" />
             <span className="text-2xl font-semibold tracking-tight text-[var(--color-ink)] font-serif">
               Mimic
             </span>
           </Link>
-
-          <div className="h-5 w-px bg-[var(--color-stone)]" />
-
-          <div className="flex items-center gap-1">
-            <Link
-              href="/"
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                mounted && pathname === "/"
-                  ? "bg-white/70 text-[var(--color-ink)] shadow-sm"
-                  : "text-[var(--color-ink-light)] hover:text-[var(--color-ink)]"
-              )}
-            >
-              Upload
-            </Link>
-            <Link
-              href="/skills"
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                mounted && (pathname === "/skills" || pathname.startsWith("/skills/"))
-                  ? "bg-white/70 text-[var(--color-ink)] shadow-sm"
-                  : "text-[var(--color-ink-light)] hover:text-[var(--color-ink)]"
-              )}
-            >
-              Skills
-            </Link>
-          </div>
         </div>
 
-        <div />
+        {/* Centre: Page links */}
+        <div className="flex items-center justify-center gap-1">
+          <Link
+            href="/"
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              mounted && pathname === "/"
+                ? "bg-[var(--color-stone)] text-[var(--color-ink)]"
+                : "text-[var(--color-ink-light)] hover:text-[var(--color-ink)]"
+            )}
+          >
+            Upload
+          </Link>
+          <Link
+            href="/skills"
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              mounted && (pathname === "/skills" || pathname.startsWith("/skills/"))
+                ? "bg-[var(--color-stone)] text-[var(--color-ink)]"
+                : "text-[var(--color-ink-light)] hover:text-[var(--color-ink)]"
+            )}
+          >
+            Skills
+          </Link>
+        </div>
 
         {/* Right: Theme toggle */}
         <div className="flex items-center justify-end">
           <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-ink-light)] transition-colors hover:bg-white/70 hover:text-[var(--color-ink)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-ink-light)] transition-colors hover:bg-[var(--color-stone)] hover:text-[var(--color-ink)]"
             aria-label="Toggle theme"
           >
             {mounted ? (
