@@ -26,6 +26,9 @@ tsconfig.tsbuildinfo
 # Session workspaces (runtime data)
 workspaces/
 
+# Root-level SKILL.md written by Claude (should live in workspaces/<session-id>/SKILL.md)
+/SKILL.md
+
 # Env
 .env
 .env.local

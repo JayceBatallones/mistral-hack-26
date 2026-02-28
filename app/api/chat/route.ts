@@ -1,5 +1,6 @@
 import { getSession, updateSession } from '@/lib/sessions'
 import { spawnClaude, cancelClaude } from '@/lib/claude'
+import fs from 'fs'
 import path from 'path'
 import type { SSEEvent } from '@/lib/types'
 
@@ -14,7 +15,8 @@ function buildPrompt(
   const lines: string[] = [
     '=== SkillForge Context ===',
     `Session workspace: ${sessionWorkspace}`,
-    `When generating SKILL.md, write it to: ${skillMdPath}`,
+    `IMPORTANT: When writing SKILL.md use the exact path: ${skillMdPath}`,
+    `Do NOT write SKILL.md to the project root or any other location.`,
   ]
 
   if (videoPath) {
@@ -65,6 +67,22 @@ export async function POST(req: Request) {
           if (event.type === 'system_init') {
             updateSession(session_id, { claude_session_id: event.session_id })
           }
+
+          // Ensure SKILL.md always lands in the session workspace, even if
+          // Claude wrote it somewhere else (e.g. the project root).
+          if (event.type === 'skill_written') {
+            const dest = path.join(session.workspace, 'SKILL.md')
+            const src = event.path
+            if (path.resolve(src) !== path.resolve(dest)) {
+              try {
+                fs.copyFileSync(src, dest)
+              } catch { /* source may not exist yet; Claude may write it later */ }
+            }
+            // Rewrite path so the client fetches from the session workspace
+            send({ ...event, path: dest })
+            return
+          }
+
           send(event)
         },
         () => {
