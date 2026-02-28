@@ -65,59 +65,59 @@ source {baseDir}/scripts/venv/bin/activate
 python3 {baseDir}/scripts/extract_keyframes.py "<video_path>" --method scene --ensure-last
 ```
 
-Output example (JSON):
-```json
-{
-  "keyframe_count": 52,
-  "image_size": "266x576",
-  "total_tokens": 10400,
-  "cost_usd_opus": 0.156,
-  "cost_usd_sonnet": 0.031,
-  "cost_usd_haiku": 0.0104,
-  "files": ["/.../key_0001.jpg", ...]
-}
+### 4. Analyze Frames with Mistral Vision (Parallel)
+
+After user approval, run `analyze_frames_mistral.py` with all frame paths.
+The script batches every 4 consecutive frames into one Mistral API call and
+fires **all batches in parallel** (e.g. 40 frames → 10 simultaneous API calls).
+
+**Setup (first time only):**
+```bash
+# Linux/Mac
+source {baseDir}/scripts/venv/bin/activate
+pip install mistralai --quiet
+
+# Windows (conda)
+conda install -n "media tools" mistralai --quiet -y
 ```
 
-### 4. Invoke Parallel Subagents After Approval
+**Run analysis:**
 
-After user approval, split the frame list into 4 sequential chunks and spawn
-all 4 Task subagents **in a single message** so they run in parallel:
-
-```
-# Split files array into 4 equal chunks, then call all 4 in one message:
-
-Task(subagent_type="general-purpose", model="haiku", description="Frames 1/4",
-  prompt="""
-User intent: {Intent from Step 1}
-
-Analyze these sequential video frames in order and summarize key actions,
-screens, and anything relevant to the user's intent:
-{chunk 1 paths, one per line}
-""")
-
-Task(subagent_type="general-purpose", model="haiku", description="Frames 2/4",
-  prompt="""
-User intent: {Intent from Step 1}
-
-Analyze these sequential video frames in order and summarize key actions,
-screens, and anything relevant to the user's intent:
-{chunk 2 paths, one per line}
-""")
-
-Task(subagent_type="general-purpose", model="haiku", description="Frames 3/4",
-  prompt="""...""")
-
-Task(subagent_type="general-purpose", model="haiku", description="Frames 4/4",
-  prompt="""...""")
+```bash
+# Linux/Mac
+source {baseDir}/scripts/venv/bin/activate
+python3 {baseDir}/scripts/analyze_frames_mistral.py \
+  frame_001.jpg frame_002.jpg ... frame_040.jpg \
+  --prompt "User intent: {Intent from Step 1}. Describe what is happening across these consecutive video frames." \
+  --format json \
+  --output analysis.json
 ```
 
-Once all 4 subagents return, merge their summaries into a final report.
+```bash
+# Windows (conda)
+conda run -n "media tools" python "{baseDir}/scripts/analyze_frames_mistral.py" ^
+  frame_001.jpg frame_002.jpg ... frame_040.jpg ^
+  --prompt "User intent: {Intent from Step 1}. Describe what is happening across these consecutive video frames." ^
+  --format json ^
+  --output analysis.json
+```
+
+Key options:
+- `--model` — default `mistral-large-latest` (Mistral Large 3); use `pixtral-large-latest` or `pixtral-12b-2409` for vision-only alternatives
+- `--workers N` — cap parallel calls (default: all batches at once)
+- `--format json|text` — JSON for structured pickup, text for readability
+- `MISTRAL_API_KEY` — read from env or `--api-key` flag
+
+The script reads the JSON output and you merge the `results[].description` fields
+into a final chronological report.
 
 Benefits of this approach:
-- ✅ 4× faster than sequential analysis
-- ✅ Each subagent has temporal context across its chunk
-- ✅ User intent threaded through every subagent
-- ✅ No extra scripts or API keys needed
+- All batches fire simultaneously — 40 frames analyzed as fast as 4
+- `mistral-large-latest` sees exactly 4 consecutive frames per call for temporal context
+- Pure Python + `mistralai` SDK, no Claude subagents needed
+- Results arrive in original frame order regardless of completion order
+
+> **Tip:** Pass `--env /path/to/.env.local` if your project stores `MISTRAL_API_KEY` in `.env.local` instead of `.env`.
 
 ## Options
 
