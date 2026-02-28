@@ -1,108 +1,218 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Video, Eye, Pencil, ListTodo, Search, FolderSearch, Terminal, FileText, Play } from 'lucide-react'
+import { Video } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ChatMessage } from '@/lib/types'
 
-type ToolMeta = { Icon: React.ElementType; label: string }
+// ─── Inline SVG Icons (14×14) — mirrors Manimate's PillIcon ──────────────────
 
-function getToolMeta(name?: string, input?: Record<string, unknown>): ToolMeta {
+function ToolSvgIcon({ name, size = 14 }: { name?: string; size?: number }) {
+  const f = 'currentColor'
   switch (name) {
+    case 'Bash':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path fillRule="evenodd" d="M3.25 3A2.25 2.25 0 001 5.25v9.5A2.25 2.25 0 003.25 17h13.5A2.25 2.25 0 0019 14.75v-9.5A2.25 2.25 0 0016.75 3H3.25zM2.5 5.25a.75.75 0 01.75-.75h13.5a.75.75 0 01.75.75v9.5a.75.75 0 01-.75.75H3.25a.75.75 0 01-.75-.75v-9.5zM5.22 7.47a.75.75 0 011.06 0l2.25 2.25a.75.75 0 010 1.06l-2.25 2.25a.75.75 0 01-1.06-1.06L6.94 10.25 5.22 8.53a.75.75 0 010-1.06zM10 12.25a.75.75 0 01.75-.75h2.5a.75.75 0 010 1.5h-2.5a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+        </svg>
+      )
     case 'Read':
-      return { Icon: Eye, label: 'Reading' }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+          <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+        </svg>
+      )
     case 'Write':
-      return { Icon: Pencil, label: 'Writing' }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+          <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
+        </svg>
+      )
     case 'Edit':
-      return { Icon: Pencil, label: 'Editing' }
-    case 'Glob':
-      return { Icon: FolderSearch, label: 'Searching' }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+        </svg>
+      )
     case 'Grep':
-      return { Icon: Search, label: 'Searching' }
+    case 'Glob':
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+        </svg>
+      )
     case 'TodoWrite':
-      return { Icon: ListTodo, label: 'Planning' }
     case 'TodoRead':
-      return { Icon: ListTodo, label: 'Reading tasks' }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path d="M3 4a1.25 1.25 0 112.5 0A1.25 1.25 0 013 4zm4.5-.75h9a.75.75 0 010 1.5h-9a.75.75 0 010-1.5zM3 10a1.25 1.25 0 112.5 0A1.25 1.25 0 013 10zm4.5-.75h9a.75.75 0 010 1.5h-9a.75.75 0 010-1.5zM3 16a1.25 1.25 0 112.5 0A1.25 1.25 0 013 16zm4.5-.75h9a.75.75 0 010 1.5h-9a.75.75 0 010-1.5z" />
+        </svg>
+      )
     case 'Task':
-      return { Icon: Play, label: 'Running task' }
-    case 'Bash': {
-      const cmd = String(input?.command ?? '').toLowerCase()
-      if (/\b(python|pip|uv)\b/.test(cmd)) return { Icon: Play, label: 'Running' }
-      if (/\b(npm|bun|yarn|pnpm)\b/.test(cmd)) return { Icon: Play, label: 'Running' }
-      if (/\b(git)\b/.test(cmd)) return { Icon: Terminal, label: 'Running' }
-      if (/\b(cat|head|tail|less)\b/.test(cmd)) return { Icon: Eye, label: 'Reading' }
-      if (/\b(mkdir|cp|mv|rm)\b/.test(cmd)) return { Icon: FileText, label: 'Running' }
-      return { Icon: Terminal, label: 'Running' }
-    }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path fillRule="evenodd" d="M2 10a8 8 0 1116 0 8 8 0 01-16 0zm6.39-2.908a.75.75 0 01.766.027l3.5 2.25a.75.75 0 010 1.262l-3.5 2.25A.75.75 0 018 12.25v-4.5a.75.75 0 01.39-.658z" clipRule="evenodd" />
+        </svg>
+      )
     default:
-      return { Icon: Terminal, label: name ?? 'Running' }
+      return (
+        <svg width={size} height={size} viewBox="0 0 20 20" fill={f}>
+          <path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 002 4.25v11.5A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.75V4.25A2.25 2.25 0 0015.75 2H4.25zm4.03 6.28a.75.75 0 00-1.06-1.06L4.97 9.47a.75.75 0 000 1.06l2.25 2.25a.75.75 0 001.06-1.06L6.56 10l1.72-1.72zm4.5-1.06a.75.75 0 10-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 101.06 1.06l2.25-2.25a.75.75 0 000-1.06l-2.25-2.25z" clipRule="evenodd" />
+        </svg>
+      )
   }
 }
 
-function formatToolSummary(name?: string, input?: Record<string, unknown>): string {
-  if (!input) return ''
-  if (name === 'Bash') return String(input.command ?? '').slice(0, 60)
-  if (name === 'Write' || name === 'Edit') return String(input.file_path ?? input.path ?? '')
-  if (name === 'Read') return String(input.file_path ?? '')
+function CheckCircleSvg({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+    </svg>
+  )
+}
+
+function ErrorCircleSvg({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+    </svg>
+  )
+}
+
+// ─── Summary helpers ──────────────────────────────────────────────────────────
+
+function getToolSummary(name?: string, input?: Record<string, unknown>): string {
+  if (!input) return name ?? ''
+  if (name === 'Bash') {
+    const cmd = String(input.command ?? '')
+    return cmd.length > 60 ? cmd.slice(0, 60) + '…' : cmd
+  }
+  if (name === 'Write' || name === 'Edit') {
+    const action = name === 'Write' ? 'Writing' : 'Editing'
+    return `${action} ${String(input.file_path ?? input.path ?? '')}`
+  }
+  if (name === 'Read') return `Reading ${String(input.file_path ?? '')}`
+  if (name === 'TodoWrite') {
+    const todos = Array.isArray(input.todos) ? input.todos : []
+    if (todos.length > 0) return `Planning ${todos.length} task${todos.length === 1 ? '' : 's'}`
+    return 'Updating task plan'
+  }
+  if (name === 'Grep' || name === 'Glob') return `Searching ${String(input.pattern ?? input.glob ?? '')}`
+  if (name === 'Task') return `Task: ${String(input.description ?? '').slice(0, 50)}`
   return JSON.stringify(input).slice(0, 60)
 }
 
-function ToolCallPill({ msg, result, isRunning }: { msg: ChatMessage; result?: ChatMessage; isRunning: boolean }) {
-  const [open, setOpen] = useState(false)
-  const { Icon, label } = getToolMeta(msg.tool_name, msg.tool_input)
+// ─── ToolCallPill — always gray tool icon, shows input on expand ─────────────
 
-  const statusIcon = result
-    ? result.is_error
-      ? <span className="text-destructive-foreground">✗</span>
-      : <span className="text-node-verify">✓</span>
-    : isRunning
-      ? <span className="flex gap-0.5 items-center">
-          <span className="w-1 h-1 rounded-full bg-primary animate-[pulseDot_1.5s_ease-in-out_0s_infinite]" />
-          <span className="w-1 h-1 rounded-full bg-primary animate-[pulseDot_1.5s_ease-in-out_0.3s_infinite]" />
-          <span className="w-1 h-1 rounded-full bg-primary animate-[pulseDot_1.5s_ease-in-out_0.6s_infinite]" />
-        </span>
-      : <span className="text-muted-foreground">—</span>
-
-  const inputStr = msg.tool_input
-    ? JSON.stringify(msg.tool_input, null, 2)
-    : ''
+function ToolCallPill({ msg, isDone }: { msg: ChatMessage; isDone: boolean }) {
+  const [expanded, setExpanded] = useState(false)
+  const summary = getToolSummary(msg.tool_name, msg.tool_input)
+  const hasExpandable = !!msg.tool_input && Object.keys(msg.tool_input).length > 0
+  const inputStr = msg.tool_input ? JSON.stringify(msg.tool_input, null, 2) : ''
 
   return (
-    <div className="tool-pill rounded-lg border border-border bg-card overflow-hidden text-xs font-mono">
+    <div>
       <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary/50 transition-colors"
+        onClick={() => hasExpandable && setExpanded(!expanded)}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5',
+          'bg-card border border-border rounded-full',
+          'text-[13px] text-muted-foreground font-mono',
+          'max-w-full text-left',
+          hasExpandable ? 'cursor-pointer hover:bg-secondary/40 transition-colors' : 'cursor-default',
+          !isDone && 'opacity-60',
+        )}
       >
-        <ChevronRight className={cn("w-3 h-3 text-muted-foreground shrink-0 transition-transform duration-150", open && "rotate-90")} />
-        <Icon className="w-3 h-3 text-primary shrink-0" />
-        <span className="text-primary font-medium shrink-0">{label}</span>
-        <span className="text-muted-foreground truncate flex-1 text-left">
-          {formatToolSummary(msg.tool_name, msg.tool_input)}
+        {/* Icon is dimmer while pending, full opacity once result is in */}
+        <span className="shrink-0 flex items-center justify-center w-[14px] h-[14px] text-muted-foreground/50">
+          <ToolSvgIcon name={msg.tool_name} />
         </span>
-        <span className="shrink-0">{statusIcon}</span>
+        <span className="truncate">{summary}</span>
       </button>
 
-      {open && (
-        <div className="border-t border-border">
-          {inputStr && (
-            <div className="px-3 py-2 border-b border-border">
-              <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1">Input</div>
-              <pre className="text-foreground/80 text-[11px] overflow-x-auto max-h-40 whitespace-pre-wrap break-all">{inputStr}</pre>
-            </div>
-          )}
-          {result && (
-            <div className="px-3 py-2">
-              <div className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1">Output</div>
-              <pre className={cn("text-[11px] overflow-x-auto max-h-48 whitespace-pre-wrap break-all", result.is_error ? 'text-destructive-foreground' : 'text-foreground/80')}>
-                {result.content || '(no output)'}
-              </pre>
-            </div>
-          )}
+      {expanded && inputStr && (
+        <div className="mt-1" style={{ marginLeft: 22 }}>
+          <pre
+            className="text-[11px] rounded-md overflow-x-auto max-h-48 whitespace-pre-wrap break-all p-2"
+            style={{ background: '#1f2937', color: '#d4d4d4', fontFamily: 'monospace' }}
+          >
+            {inputStr}
+          </pre>
         </div>
       )}
     </div>
   )
 }
+
+// ─── ToolResultRow — result preview pill with green check ─────────────────────
+
+function stripLineNumbers(line: string): string {
+  return line.replace(/^\s*\d+→/, '').trim()
+}
+
+// ─── ToolResultRow — green check pill for tool_result, mirrors Manimate ───────
+
+function ToolResultRow({ msg }: { msg: ChatMessage }) {
+  const [expanded, setExpanded] = useState(false)
+  const isError = msg.is_error ?? false
+  const content = msg.content ?? ''
+
+  // Find the first non-empty line after stripping read-tool line-number prefixes
+  const lines = content.split('\n').map(stripLineNumbers).filter((l) => l.length > 0)
+  const firstLine = lines[0] ?? ''
+  const preview = firstLine.slice(0, 80) + (firstLine.length > 80 ? '…' : '')
+  // Expandable if multi-line OR first line was truncated
+  const hasExpandable = lines.length > 1 || firstLine.length > 80
+
+  // Don't render noisy/trivial results
+  if (firstLine.length < 8) return null
+
+  return (
+    <div>
+      <button
+        onClick={() => hasExpandable && setExpanded(!expanded)}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5',
+          'bg-card border border-border rounded-full',
+          'text-[13px] text-muted-foreground font-mono',
+          'max-w-full text-left',
+          hasExpandable ? 'cursor-pointer hover:bg-secondary/40 transition-colors' : 'cursor-default',
+          isError && 'text-node-error',
+        )}
+      >
+        <span
+          className={cn(
+            'shrink-0 flex items-center justify-center w-[14px] h-[14px]',
+            isError && 'text-node-error',
+          )}
+          style={isError ? undefined : { color: '#16a34a' }}
+        >
+          {isError ? <ErrorCircleSvg /> : <CheckCircleSvg />}
+        </span>
+        <span className="truncate">{preview}</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-1" style={{ marginLeft: 22 }}>
+          <pre
+            className="text-[11px] rounded-md overflow-x-auto max-h-48 whitespace-pre-wrap break-all p-2"
+            style={{
+              background: '#1f2937',
+              color: isError ? '#fca5a5' : '#d4d4d4',
+              fontFamily: 'monospace',
+            }}
+          >
+            {content}
+          </pre>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main ChatPanel ───────────────────────────────────────────────────────────
 
 export function ChatPanel({
   messages,
@@ -130,9 +240,10 @@ export function ChatPanel({
 
   const lastAssistantId = messages.findLast((m) => m.role === 'assistant')?.id
 
-  const toolResults = new Map<string, ChatMessage>()
+  // Track which tool_use ids have a result (for pending vs done opacity)
+  const completedToolIds = new Set<string>()
   for (const m of messages) {
-    if (m.role === 'tool_result' && m.tool_id) toolResults.set(m.tool_id, m)
+    if (m.role === 'tool_result' && m.tool_id) completedToolIds.add(m.tool_id)
   }
 
   return (
@@ -163,12 +274,19 @@ export function ChatPanel({
       )}
 
       {messages.map((msg) => {
-        if (msg.role === 'tool_result') return null
-
-        if (msg.role === 'tool_use') {
+        if (msg.role === 'tool_result') {
           return (
             <div key={msg.id} className="animate-slide-up">
-              <ToolCallPill msg={msg} result={msg.tool_id ? toolResults.get(msg.tool_id) : undefined} isRunning={isRunning} />
+              <ToolResultRow msg={msg} />
+            </div>
+          )
+        }
+
+        if (msg.role === 'tool_use') {
+          const isDone = !!msg.tool_id && completedToolIds.has(msg.tool_id)
+          return (
+            <div key={msg.id} className="animate-slide-up">
+              <ToolCallPill msg={msg} isDone={isDone} />
             </div>
           )
         }
