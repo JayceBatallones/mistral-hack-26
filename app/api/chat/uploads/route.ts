@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/sessions'
+import { getSession, updateSession } from '@/lib/sessions'
 import fs from 'fs'
 import path from 'path'
 
@@ -21,6 +21,9 @@ export async function POST(req: Request) {
   const filePath = path.join(session.workspace, sanitizedName)
 
   fs.writeFileSync(filePath, buffer)
+
+  // Persist video info so the session can restore it on revisit
+  updateSession(sessionId, { video_path: filePath, video_name: sanitizedName })
 
   return Response.json({
     path: filePath,

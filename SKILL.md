@@ -1,30 +1,36 @@
-# Skill: Luma Login via Google OAuth
+# Sign into Luma via Google OAuth
 
-## Context
-- Video: luma_login_test.mov
-- URL: https://lu.ma
-- Purpose: Log in to Luma using an existing Google account and land on the authenticated Events dashboard
+## Description
+Sign into the Luma (lu.ma) event platform using Google OAuth authentication, dismiss the passkey setup prompt, and navigate to the home events feed.
 
 ## Steps
 
-1. Navigate to `https://lu.ma`
-2. Wait for the login page to load — verify "Welcome to Luma" heading is visible
-3. Click the "Sign in with Google" link (located below the "Continue with Email" button)
-4. Wait for the Google OAuth consent modal to appear — verify Google branding and account selector are visible
-5. Click the "Continue" button (cyan/turquoise) on the Google consent modal
-6. If an email confirmation or verification modal appears, confirm or enter the required details
-7. Wait for redirect back to Luma — verify the Events dashboard loads with an "Events" heading and event cards visible
+### 1. Navigate to Luma sign-in page
+- **Tool:** `browser-tools`
+- **Action:** Open `https://lu.ma/signin` in a new tab
+- **Expected:** The Luma sign-in page loads with "Welcome to Luma" heading, email input, and social sign-in buttons
 
-## Verification
+### 2. Click "Sign in with Google"
+- **Tool:** `browser-tools`
+- **Action:** Click the "Sign in with Google" button
+- **Expected:** A Google OAuth popup window opens
 
-| Step | Signal |
-|------|--------|
-| Login page loaded | "Welcome to Luma" heading visible |
-| Google OAuth modal open | Modal overlay with account selector and "Continue" button |
-| OAuth granted | Modal closes and page redirects |
-| Login success | Events page with "Events" heading; personal event feed with multiple event cards |
+### 3. Select Google account
+- **Tool:** `browser-tools`
+- **Action:** In the Google OAuth popup, wait for the "Choose an account" dialog to load, then click on the account `jyc.onlinebusiness@gmail.com` (Jayce Batallones)
+- **Expected:** Google shows a consent/confirmation screen titled "You're signing back in to Luma"
 
-## Notes
-- The login page shows both "Sign in with Google" and "Sign up with Google" links — use **"Sign in with Google"** for existing accounts
-- The Google OAuth modal may show account selector if multiple Google accounts are active — select the intended account
-- After login, the authenticated state is confirmed by the absence of a login form and the presence of the events feed
+### 4. Confirm Google sign-in
+- **Tool:** `browser-tools`
+- **Action:** Click the "Continue" button on the Google consent screen
+- **Expected:** The popup closes and Luma shows a "Linking Google Account" transition screen with Luma and Google logos
+
+### 5. Dismiss passkey prompt
+- **Tool:** `browser-tools`
+- **Action:** Wait for the "Create a Passkey" modal to appear, then click "Not Now"
+- **Expected:** The passkey modal dismisses and a welcome animation plays showing the user's profile photo and "Welcome to Luma"
+
+### 6. Verify home feed loaded
+- **Tool:** `browser-tools`
+- **Action:** Wait for redirect to `lu.ma/home` and verify the Events feed loads with upcoming events
+- **Expected:** The Events page shows with "Upcoming" tab active and event cards visible

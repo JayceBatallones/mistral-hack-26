@@ -1,13 +1,13 @@
 'use client'
 
 import { Navbar } from '@/components/navbar'
-import { UploadHero } from '@/components/upload-hero'
+import { SkillsListContainer } from '@/components/skills-list'
 
-export default function HomePage() {
+export default function SkillsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <UploadHero />
+      <SkillsListContainer />
     </div>
   )
 }

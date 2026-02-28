@@ -102,6 +102,29 @@ export function recoverSession(workspaceDir: string): Session | null {
   }
 }
 
+// ── SKILL.md helpers ─────────────────────────────────────────────────────────
+
+export function hasSkillMd(id: string): boolean {
+  const session = getSession(id)
+  if (!session) return false
+  const skillPath = path.join(session.workspace, 'SKILL.md')
+  return fs.existsSync(skillPath)
+}
+
+export function getSkillTitle(id: string): string | null {
+  const session = getSession(id)
+  if (!session) return null
+  const skillPath = path.join(session.workspace, 'SKILL.md')
+  try {
+    const content = fs.readFileSync(skillPath, 'utf-8')
+    // Extract title from first heading
+    const match = content.match(/^#\s+(.+)/m)
+    return match ? match[1].trim() : null
+  } catch {
+    return null
+  }
+}
+
 // Persist session metadata so it survives server restarts.
 function _persistMeta(session: Session): void {
   const metaPath = path.join(session.workspace, 'session.json')

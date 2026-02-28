@@ -13,6 +13,10 @@ export interface Session {
   claude_session_id?: string
   workspace: string
   title?: string
+  has_skill_md?: boolean
+  skill_title?: string
+  video_path?: string
+  video_name?: string
 }
 
 export interface ChatMessage {
@@ -25,4 +29,22 @@ export interface ChatMessage {
   is_error?: boolean
   video_name?: string
   timestamp: number
+}
+
+export interface WorkflowStep {
+  id: string
+  stepNumber: number
+  title: string
+  description: string
+  type: 'navigate' | 'action' | 'wait' | 'verify' | 'error'
+  details?: string[]
+  code?: string
+  branches?: WorkflowStep[]
+}
+
+export interface StackTraceEntry {
+  timestamp: string
+  level: 'info' | 'success' | 'warn' | 'error' | 'debug'
+  message: string
+  details?: string
 }
