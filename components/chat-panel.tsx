@@ -1,9 +1,43 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Video } from 'lucide-react'
+import { ChevronRight, Video, Eye, Pencil, ListTodo, Search, FolderSearch, Terminal, FileText, Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ChatMessage } from '@/lib/types'
+
+type ToolMeta = { Icon: React.ElementType; label: string }
+
+function getToolMeta(name?: string, input?: Record<string, unknown>): ToolMeta {
+  switch (name) {
+    case 'Read':
+      return { Icon: Eye, label: 'Reading' }
+    case 'Write':
+      return { Icon: Pencil, label: 'Writing' }
+    case 'Edit':
+      return { Icon: Pencil, label: 'Editing' }
+    case 'Glob':
+      return { Icon: FolderSearch, label: 'Searching' }
+    case 'Grep':
+      return { Icon: Search, label: 'Searching' }
+    case 'TodoWrite':
+      return { Icon: ListTodo, label: 'Planning' }
+    case 'TodoRead':
+      return { Icon: ListTodo, label: 'Reading tasks' }
+    case 'Task':
+      return { Icon: Play, label: 'Running task' }
+    case 'Bash': {
+      const cmd = String(input?.command ?? '').toLowerCase()
+      if (/\b(python|pip|uv)\b/.test(cmd)) return { Icon: Play, label: 'Running' }
+      if (/\b(npm|bun|yarn|pnpm)\b/.test(cmd)) return { Icon: Play, label: 'Running' }
+      if (/\b(git)\b/.test(cmd)) return { Icon: Terminal, label: 'Running' }
+      if (/\b(cat|head|tail|less)\b/.test(cmd)) return { Icon: Eye, label: 'Reading' }
+      if (/\b(mkdir|cp|mv|rm)\b/.test(cmd)) return { Icon: FileText, label: 'Running' }
+      return { Icon: Terminal, label: 'Running' }
+    }
+    default:
+      return { Icon: Terminal, label: name ?? 'Running' }
+  }
+}
 
 function formatToolSummary(name?: string, input?: Record<string, unknown>): string {
   if (!input) return ''
@@ -15,6 +49,7 @@ function formatToolSummary(name?: string, input?: Record<string, unknown>): stri
 
 function ToolCallPill({ msg, result, isRunning }: { msg: ChatMessage; result?: ChatMessage; isRunning: boolean }) {
   const [open, setOpen] = useState(false)
+  const { Icon, label } = getToolMeta(msg.tool_name, msg.tool_input)
 
   const statusIcon = result
     ? result.is_error
@@ -39,7 +74,8 @@ function ToolCallPill({ msg, result, isRunning }: { msg: ChatMessage; result?: C
         className="flex w-full items-center gap-2 px-3 py-2 hover:bg-secondary/50 transition-colors"
       >
         <ChevronRight className={cn("w-3 h-3 text-muted-foreground shrink-0 transition-transform duration-150", open && "rotate-90")} />
-        <span className="text-primary font-medium shrink-0">{msg.tool_name}</span>
+        <Icon className="w-3 h-3 text-primary shrink-0" />
+        <span className="text-primary font-medium shrink-0">{label}</span>
         <span className="text-muted-foreground truncate flex-1 text-left">
           {formatToolSummary(msg.tool_name, msg.tool_input)}
         </span>
