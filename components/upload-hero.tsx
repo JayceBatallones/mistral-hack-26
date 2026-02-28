@@ -76,34 +76,36 @@ export function UploadHero() {
   )
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-6">
+    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-6 pb-24">
       {/* Greeting section */}
       <div className="mb-12 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-1.5">
-          <Film className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-muted-foreground">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-stone)] bg-white/70 px-4 py-1.5 backdrop-blur-sm">
+          <Film className="h-4 w-4 text-[var(--color-accent-coral)]" />
+          <span className="text-sm font-medium text-[var(--color-ink-light)]">
             Video to Skills Pipeline
           </span>
         </div>
-        <h1 className="mb-4 text-balance text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-          Teach your agents
+        <h1 className="mb-4 text-balance text-4xl font-medium tracking-tight text-[var(--color-ink)] md:text-5xl lg:text-6xl font-serif leading-tight">
+          Teach Mimi
           <br />
-          <span className="text-primary">new skills</span>
+          <span className="italic text-[var(--color-ink-light)]">to mimic your workflow</span>
         </h1>
-        <p className="mx-auto max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
-          Upload a video walkthrough and SkillForge will generate a structured
-          SKILL.md that your AI agents can call. No code required.
+        <p className="mx-auto max-w-xl text-pretty text-lg leading-relaxed text-[var(--color-ink-light)]">
+          Upload a video walkthrough and Mimi will watch every move, copy each step, and write a structured SKILL.md that Claude can replay. No code required.
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-[var(--color-ink-light)]/80">
+          Mimi is the mimic: she studies what you do, keeps the intent intact, and hands it off to Claude so your agents can follow along.
         </p>
       </div>
 
       {/* Upload zone */}
       <div
         className={cn(
-          "group relative w-full max-w-2xl cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-all duration-300",
+          "group relative w-full max-w-2xl cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300",
           isUploading && "pointer-events-none opacity-60",
           isDragging
-            ? "border-primary bg-primary/5 shadow-[0_0_30px_-5px] shadow-primary/20"
-            : "border-border bg-card hover:border-primary/50 hover:bg-secondary/50"
+            ? "border-[var(--color-ink)] bg-white/80 shadow-[0_0_30px_-5px] shadow-[var(--color-accent-sand)]/40"
+            : "border-[var(--color-stone)] bg-white/80 hover:border-[var(--color-accent-sand)] hover:bg-[var(--color-paper)]"
         )}
         onDrag={handleDrag}
         onDragEnter={handleDragIn}
@@ -134,10 +136,10 @@ export function UploadHero() {
             className={cn(
               "flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300",
               isUploading
-                ? "bg-primary text-primary-foreground"
+                ? "bg-[var(--color-ink)] text-white"
                 : isDragging
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                  ? "bg-[var(--color-ink)] text-white"
+                  : "bg-[var(--color-stone)] text-[var(--color-ink-light)] group-hover:bg-[var(--color-accent-sand)]/40 group-hover:text-[var(--color-ink)]"
             )}
           >
             {isUploading ? (
@@ -148,19 +150,19 @@ export function UploadHero() {
           </div>
 
           <div>
-            <p className="text-lg font-semibold text-foreground">
+            <p className="text-lg font-semibold text-[var(--color-ink)]">
               {isUploading ? "Uploading..." : isDragging ? "Drop your video here" : "Drop a video to get started"}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-[var(--color-ink-light)]">
               or click to browse {'  '}
-              <span className="text-muted-foreground/60">
+              <span className="text-[var(--color-ink-light)]/60">
                 MP4, MOV, WebM up to 500MB
               </span>
             </p>
           </div>
 
           {!isUploading && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <div className="mt-2 flex items-center gap-2 text-sm text-[var(--color-accent-coral)] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <span>Upload and generate skill</span>
               <ArrowRight className="h-4 w-4" />
             </div>
@@ -174,7 +176,7 @@ export function UploadHero() {
           (hint) => (
             <span
               key={hint}
-              className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs text-muted-foreground"
+              className="rounded-full border border-[var(--color-stone)] bg-white/70 px-3 py-1 text-xs text-[var(--color-ink-light)]"
             >
               {hint}
             </span>

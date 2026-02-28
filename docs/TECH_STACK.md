@@ -1,4 +1,4 @@
-# Tech Stack: SkillForge follows Manimate exactly
+# Tech Stack: Mimic follows Manimate exactly
 
 This project is built on the same stack as Manimate (`./Manimate`). Read Manimate's source as the reference implementation. When in doubt, copy the pattern — don't invent a new one.
 
@@ -196,7 +196,7 @@ No SSE libraries. No `EventSource`. Raw `fetch` + `ReadableStream` only — exac
 
 ## 6. SSE Event Types
 
-Adapt Manimate's `SSEEvent` type (`src/lib/types.ts`) for this project's events. Keep the same shape — just swap Manimate-specific fields for SkillForge ones:
+Adapt Manimate's `SSEEvent` type (`src/lib/types.ts`) for this project's events. Keep the same shape — just swap Manimate-specific fields for Mimic ones:
 
 ```typescript
 // src/lib/types.ts
@@ -363,7 +363,7 @@ Synchronous API only (`DatabaseSync`) — no async DB calls. Keeps the code simp
 
 These components transfer almost unchanged. Adapt props and remove Manimate-specific fields:
 
-| Manimate component | SkillForge use | Changes |
+| Manimate component | Mimic use | Changes |
 |-------------------|----------------|---------|
 | `SplitPanel.tsx` | Split layout (left chat / right SKILL.md) | **Copy verbatim** — no changes needed |
 | `ChatInput.tsx` | Prompt input + video attachment | Change `accept="image/*"` → `accept="video/*,.mov,.mp4,.webm"`. Remove image grid preview, add video filename chip |
@@ -376,7 +376,7 @@ These components transfer almost unchanged. Adapt props and remove Manimate-spec
 ```typescript
 // Manimate's SplitPanel.tsx handles drag-to-resize between panels.
 // Default left width 40%, min 20%, max 80%.
-// No changes needed for SkillForge.
+// No changes needed for Mimic.
 <SplitPanel
   leftPanel={<ChatPanel />}
   rightPanel={<SkillPanel />}
