@@ -28,11 +28,11 @@ Launch Chrome with remote debugging on `:9222`. Use `--profile` to preserve user
 ## Navigate
 
 ```bash
-{baseDir}/browser-nav.js https://example.com
-{baseDir}/browser-nav.js https://example.com --new
+{baseDir}/browser-nav.js https://example.com --new   # open in a new tab (use this when starting a workflow replay)
+{baseDir}/browser-nav.js https://example.com          # reuse current tab
 ```
 
-Navigate to URLs. Use `--new` flag to open in a new tab instead of reusing current tab.
+Navigate to URLs. **Always use `--new` for the first navigation when replaying a workflow** — this opens a fresh tab instead of overwriting whatever the user has open. Subsequent navigations within the same workflow can omit `--new`.
 
 ## Evaluate JavaScript
 

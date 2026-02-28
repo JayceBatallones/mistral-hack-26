@@ -17,6 +17,7 @@ function buildPrompt(
     `Session workspace: ${sessionWorkspace}`,
     `IMPORTANT: When writing SKILL.md use the exact path: ${skillMdPath}`,
     `Do NOT write SKILL.md to the project root or any other location.`,
+    `IMPORTANT: When replaying a workflow with browser-tools, always use the --new flag for the first navigation (e.g. browser-nav.js <url> --new). Never reuse the current tab for the initial navigation.`,
   ]
 
   if (videoPath) {
