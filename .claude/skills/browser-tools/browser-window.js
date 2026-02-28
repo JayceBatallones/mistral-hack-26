@@ -17,35 +17,18 @@ const browser = await puppeteer.connect({
 	process.exit(1);
 });
 
-// Listen for the new page — use .on() not .once() since other targets
-// (e.g. omnibox popups) may fire first and consume the once listener
-const newPagePromise = new Promise(resolve => {
-	const handler = async (target) => {
-		if (target.type() === "page") {
-			browser.off("targetcreated", handler);
-			resolve(await target.page());
-		}
-	};
-	browser.on("targetcreated", handler);
-});
+try {
+	// Unique anchor URL — pass directly to createTarget, no listener + goto needed
+	const anchorUrl = `data:text/html,agent-window-${Date.now()}`;
 
-// Use browser-level CDP session so Target.createTarget is properly handled
-const browserTarget = browser.target();
-const client = await browserTarget.createCDPSession();
-await client.send("Target.createTarget", { url: "about:blank", newWindow: true });
-await client.detach();
+	const client = await browser.target().createCDPSession();
+	await client.send("Target.createTarget", { url: anchorUrl, newWindow: true });
+	await client.detach();
 
-const anchorPage = await Promise.race([
-	newPagePromise,
-	new Promise((_, reject) => setTimeout(() => reject(new Error("timeout waiting for window")), 5000)),
-]);
+	mkdirSync(SCRAPING_DIR, { recursive: true });
+	writeFileSync(AGENT_WINDOW_FILE, anchorUrl, "utf8");
 
-// Navigate anchor tab to a unique identifiable URL so we can find it later
-const anchorUrl = `data:text/html,agent-window-${Date.now()}`;
-await anchorPage.goto(anchorUrl);
-
-mkdirSync(SCRAPING_DIR, { recursive: true });
-writeFileSync(AGENT_WINDOW_FILE, anchorUrl, "utf8");
-
-await browser.disconnect();
-console.log("✓ Agent window opened — browser agent will work here");
+	console.log("✓ Agent window opened — browser agent will work here");
+} finally {
+	await browser.disconnect();
+}

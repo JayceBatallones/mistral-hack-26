@@ -33,47 +33,37 @@ const b = await Promise.race([
 	process.exit(1);
 });
 
-if (newTab) {
-	let opened = false;
+try {
+	if (newTab) {
+		let opened = false;
 
-	// If an agent window exists, open the new tab inside it
-	if (existsSync(AGENT_WINDOW_FILE)) {
-		const anchorUrl = readFileSync(AGENT_WINDOW_FILE, "utf8").trim();
-		const anchorPage = (await b.pages()).find(p => p.url() === anchorUrl);
+		// If an agent window exists, open the new tab inside it
+		if (existsSync(AGENT_WINDOW_FILE)) {
+			const anchorUrl = readFileSync(AGENT_WINDOW_FILE, "utf8").trim();
+			const anchorPage = (await b.pages()).find(p => p.url() === anchorUrl);
 
-		if (anchorPage) {
-			const newPagePromise = new Promise(resolve => {
-				const handler = async (t) => {
-					if (t.type() === "page") {
-						b.off("targetcreated", handler);
-						resolve(await t.page());
-					}
-				};
-				b.on("targetcreated", handler);
-			});
-			await anchorPage.evaluate(() => window.open("about:blank", "_blank"));
-			const newPage = await Promise.race([
-				newPagePromise,
-				new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 5000)),
-			]);
-			await newPage.goto(url, { waitUntil: "domcontentloaded" });
-			console.log("✓ Opened in agent window:", url);
-			opened = true;
+			if (anchorPage) {
+				// window.open(url) directly — no blank+capture+goto needed
+				await anchorPage.evaluate((u) => window.open(u, "_blank"), url);
+				console.log("✓ Opened in agent window:", url);
+				opened = true;
+			}
 		}
-	}
 
-	if (!opened) {
-		const p = await b.newPage();
+		if (!opened) {
+			const p = await b.newPage();
+			await p.goto(url, { waitUntil: "domcontentloaded" });
+			console.log("✓ Opened:", url);
+		}
+	} else {
+		const pages = await b.pages();
+		const p = pages.at(-1);
 		await p.goto(url, { waitUntil: "domcontentloaded" });
-		console.log("✓ Opened:", url);
+		if (reload) {
+			await p.reload({ waitUntil: "domcontentloaded" });
+		}
+		console.log("✓ Navigated to:", url);
 	}
-} else {
-	const p = (await b.pages()).at(-1);
-	await p.goto(url, { waitUntil: "domcontentloaded" });
-	if (reload) {
-		await p.reload({ waitUntil: "domcontentloaded" });
-	}
-	console.log("✓ Navigated to:", url);
+} finally {
+	await b.disconnect();
 }
-
-await b.disconnect();
