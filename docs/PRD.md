@@ -1,6 +1,6 @@
 # PRD: Video → Skill → Agent (via Claude Code)
 
-**Product Name:** SkillForge (working title)
+**Product Name:** Mimic (working title)
 **Date:** February 28, 2026
 **Team Size:** 3 engineers (hackathon)
 **Timeframe:** 1-day build
@@ -242,7 +242,7 @@ We follow the same pattern directly:
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│  SkillForge                  [Sessions ▾]   [New Session]  │
+│  Mimic                  [Sessions ▾]   [New Session]  │
 ├──────────────────────────┬────────────────────────────────┤
 │                          │                                 │
 │   LEFT: CHAT TIMELINE    │   RIGHT: SKILL.md               │

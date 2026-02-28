@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Fraunces, Inter, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ViewModeProvider } from '@/lib/view-mode-context'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _fraunces = Fraunces({ subsets: ["latin"], variable: '--font-serif' })
+const _inter = Inter({ subsets: ["latin"], variable: '--font-sans' })
+const _geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  title: 'SkillForge',
-  description: 'Record once. AI watches. Runs forever.',
+  title: 'Mimic',
+  description: 'Mimi studies your recording, copies each move, and Claude replays the resulting SKILL.md.',
 }
 
 export const viewport: Viewport = {
@@ -18,9 +19,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${_inter.variable} ${_fraunces.variable} ${_geistMono.variable}`}>
       <body className="font-sans antialiased min-h-screen bg-background text-foreground" suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ViewModeProvider>
             {children}
           </ViewModeProvider>

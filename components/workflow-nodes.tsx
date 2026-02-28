@@ -184,8 +184,33 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
 
   if (steps.length === 0 && !markdown) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-center px-8">
-        <div className="text-5xl mb-2 opacity-30">🔄</div>
+      <div className="relative flex h-full flex-col items-center justify-center gap-3 text-center px-8 overflow-hidden">
+        <div
+          className="absolute inset-0 -z-10 opacity-35"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(42, 40, 37, 0.35) 1.2px, transparent 1.2px)",
+            backgroundSize: "18px 18px",
+            backgroundPosition: "0 0",
+          }}
+          aria-hidden="true"
+        />
+        <div className="grid grid-cols-10 gap-2 mb-1">
+          {Array.from({ length: 50 }).map((_, i) => {
+            const cols = 10
+            const rows = 5
+            const col = i % cols
+            const row = Math.floor(i / cols)
+            const t = (col / (cols - 1) + (1 - row / (rows - 1))) / 2
+            const opacity = 0.2 + 0.8 * t
+            return (
+              <span
+                key={i}
+                className="h-1.5 w-1.5 rounded-full bg-[var(--color-ink-light)]"
+                style={{ opacity }}
+              />
+            )
+          })}
+        </div>
         <p className="text-muted-foreground text-sm">Workflow steps will appear here</p>
         <p className="text-muted-foreground/60 text-xs">
           Generated as Claude analyzes your recording

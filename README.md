@@ -1,8 +1,8 @@
-# SkillForge
+# Mimic
 
 Record once. AI watches. Runs forever.
 
-Attach a screen recording, describe the workflow — Claude extracts keyframes, analyzes them, and writes a replayable `SKILL.md`. Then say "replay the workflow" and Claude drives Chrome to execute it.
+Mimi, Mimic’s analysis companion, watches your recording, copies the workflow, and writes a replayable `SKILL.md` while Claude validates it. Then say "replay the workflow" and Claude drives Chrome to execute it.
 
 ## Prerequisites
 
@@ -40,10 +40,10 @@ workspaces/
     SKILL.md         # generated skill file
 ```
 
-Override with `SKILLFORGE_WORKSPACES_DIR` in `.env.local`:
+Override with `MIMIC_WORKSPACES_DIR` in `.env.local`:
 
 ```bash
-SKILLFORGE_WORKSPACES_DIR=/path/to/your/workspaces
+MIMIC_WORKSPACES_DIR=/path/to/your/workspaces
 ```
 
 ## Notes
@@ -51,3 +51,8 @@ SKILLFORGE_WORKSPACES_DIR=/path/to/your/workspaces
 - Sessions and chat history survive page reloads and server restarts
 - Each session has its own isolated `SKILL.md` — never written to the project root
 - Stop button uses SIGTERM → 300ms → SIGKILL to reliably cancel running Claude processes
+
+## Meet Mimi
+
+- Mimi is the mimic — she sees what you do, copies the steps, and keeps everything in sync with SKILL.md.
+- The `Mimic` brand centers on this character and the idea that once Mimi learns a workflow, she can replay it anytime.
