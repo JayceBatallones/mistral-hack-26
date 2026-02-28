@@ -64,54 +64,88 @@ function IconVideo({ className }: { className?: string }) {
   )
 }
 
-// ─── Tool Call Pill ─────────────────────────────────────────────────────────
+// ─── Tool-specific icons ─────────────────────────────────────────────────────
+
+function PillIcon({ toolName }: { toolName?: string }) {
+  const s = 13
+  const f = 'currentColor'
+  if (toolName === 'Bash') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path fillRule="evenodd" d="M3.25 3A2.25 2.25 0 001 5.25v9.5A2.25 2.25 0 003.25 17h13.5A2.25 2.25 0 0019 14.75v-9.5A2.25 2.25 0 0016.75 3H3.25zM2.5 5.25a.75.75 0 01.75-.75h13.5a.75.75 0 01.75.75v9.5a.75.75 0 01-.75.75H3.25a.75.75 0 01-.75-.75v-9.5zM5.22 7.47a.75.75 0 011.06 0l2.25 2.25a.75.75 0 010 1.06l-2.25 2.25a.75.75 0 01-1.06-1.06L6.94 10.25 5.22 8.53a.75.75 0 010-1.06zM10 12.25a.75.75 0 01.75-.75h2.5a.75.75 0 010 1.5h-2.5a.75.75 0 01-.75-.75z" clipRule="evenodd" /></svg>
+  )
+  if (toolName === 'Read') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" /><path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>
+  )
+  if (toolName === 'Write') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>
+  )
+  if (toolName === 'Edit') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" /></svg>
+  )
+  if (toolName === 'Grep' || toolName === 'Glob') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" /></svg>
+  )
+  if (toolName === 'WebFetch' || toolName === 'WebSearch') return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-1.503.204A6.5 6.5 0 117.95 3.83L6.927 6.422A1.75 1.75 0 006.743 8.5H4.25a.75.75 0 00-.75.75v1.5c0 .414.336.75.75.75h1.374a1.75 1.75 0 011.673 1.239l.346 1.133A6.474 6.474 0 0010 16.5a6.48 6.48 0 004.763-2.084l-.36-.325A1.75 1.75 0 0113.225 12h-.94a.75.75 0 01-.748-.688l-.173-2.074a1.75 1.75 0 011.057-1.748l2.076-.876z" clipRule="evenodd" /></svg>
+  )
+  // default → wrench
+  return (
+    <svg width={s} height={s} viewBox="0 0 20 20" fill={f}><path fillRule="evenodd" d="M13.488 2.513a1.75 1.75 0 00-2.55.138l-1.093 1.312a1.75 1.75 0 00-.376 1.372l.217 1.302-4.262 4.262a1.75 1.75 0 000 2.474l.707.708a1.75 1.75 0 002.474 0l4.262-4.262 1.302.217a1.75 1.75 0 001.372-.376l1.312-1.093a1.75 1.75 0 00.138-2.55l-3.503-3.503z" clipRule="evenodd" /></svg>
+  )
+}
+
+// ─── Tool Call Pill ──────────────────────────────────────────────────────────
+// Compact Manimate-style rounded pill — inline expandable
 
 function ToolCallPill({ msg, result, isRunning }: { msg: ChatMessage; result?: ChatMessage; isRunning: boolean }) {
-  const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const isDone = !!result
+  const isError = result?.is_error
 
-  const statusIcon = result
-    ? result.is_error
-      ? <span className="text-red-400">✗</span>
-      : <span className="text-emerald-400">✓</span>
-    : isRunning
-      ? <span className="flex gap-0.5 items-center">
-          <span className="w-1 h-1 rounded-full bg-indigo-400 animate-[pulseDot_1.5s_ease-in-out_0s_infinite]" />
-          <span className="w-1 h-1 rounded-full bg-indigo-400 animate-[pulseDot_1.5s_ease-in-out_0.3s_infinite]" />
-          <span className="w-1 h-1 rounded-full bg-indigo-400 animate-[pulseDot_1.5s_ease-in-out_0.6s_infinite]" />
-        </span>
-      : <span className="text-zinc-600">—</span>
-
-  const inputStr = msg.tool_input
-    ? JSON.stringify(msg.tool_input, null, 2)
-    : ''
+  const summary = getToolSummary(msg.tool_name, msg.tool_input)
+  const inputStr = msg.tool_input ? JSON.stringify(msg.tool_input, null, 2) : ''
+  const hasExpandable = !!inputStr || !!(result?.content)
 
   return (
-    <div className="tool-pill rounded-lg border border-[#1f1f1f] bg-[#0f0f0f] overflow-hidden text-xs font-mono">
+    <div>
       <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-3 py-2 hover:bg-[#161616] transition-colors"
+        onClick={() => hasExpandable && setExpanded(!expanded)}
+        style={{ cursor: hasExpandable ? 'pointer' : 'default', width: 'fit-content', maxWidth: '100%' }}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-mono transition-colors
+          ${isError ? 'border-red-900/60 bg-red-950/20 hover:bg-red-950/30' : 'border-[#1f1f1f] bg-[#0f0f0f] hover:bg-[#141414]'}`}
       >
-        <IconChevron className="w-3 h-3 text-zinc-500 shrink-0" open={open} />
-        <span className="text-indigo-400 font-medium shrink-0">{msg.tool_name}</span>
-        <span className="text-zinc-500 truncate flex-1 text-left">
-          {formatToolSummary(msg.tool_name, msg.tool_input)}
+        {/* Status / tool icon */}
+        <span className="shrink-0 flex items-center justify-center" style={{ width: 13, height: 13,
+          color: isError ? '#f87171' : isDone ? '#34d399' : isRunning ? '#818cf8' : '#52525b' }}>
+          {isError ? (
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+          ) : isDone ? (
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
+          ) : (
+            <PillIcon toolName={msg.tool_name} />
+          )}
         </span>
-        <span className="shrink-0">{statusIcon}</span>
+
+        {/* Action label — no tool name, just what it's doing */}
+        <span className={`truncate ${isError ? 'text-red-400' : isDone ? 'text-zinc-400' : 'text-zinc-300'}`}
+          style={{ maxWidth: 280 }}>
+          {summary || msg.tool_name}
+        </span>
       </button>
 
-      {open && (
-        <div className="border-t border-[#1a1a1a]">
+      {/* Expanded detail */}
+      {expanded && hasExpandable && (
+        <div className="mt-1 ml-4 rounded-lg border border-[#1a1a1a] bg-[#0a0a0a] overflow-hidden text-[11px] font-mono">
           {inputStr && (
-            <div className="px-3 py-2 border-b border-[#1a1a1a]">
-              <div className="text-zinc-600 text-[10px] uppercase tracking-wider mb-1">Input</div>
-              <pre className="text-zinc-300 text-[11px] overflow-x-auto max-h-40 whitespace-pre-wrap break-all">{inputStr}</pre>
+            <div className="px-3 py-2 border-b border-[#141414]">
+              <div className="text-zinc-700 text-[10px] uppercase tracking-wider mb-1.5">Input</div>
+              <ExpandedInput toolName={msg.tool_name} input={msg.tool_input} />
             </div>
           )}
-          {result && (
+          {result?.content && (
             <div className="px-3 py-2">
-              <div className="text-zinc-600 text-[10px] uppercase tracking-wider mb-1">Output</div>
-              <pre className={`text-[11px] overflow-x-auto max-h-48 whitespace-pre-wrap break-all ${result.is_error ? 'text-red-400' : 'text-zinc-300'}`}>
-                {result.content || '(no output)'}
+              <div className="text-zinc-700 text-[10px] uppercase tracking-wider mb-1.5">Output</div>
+              <pre className={`overflow-x-auto max-h-44 whitespace-pre-wrap break-all leading-relaxed ${result.is_error ? 'text-red-400' : 'text-zinc-400'}`}>
+                {result.content}
               </pre>
             </div>
           )}
@@ -121,12 +155,98 @@ function ToolCallPill({ msg, result, isRunning }: { msg: ChatMessage; result?: C
   )
 }
 
-function formatToolSummary(name?: string, input?: Record<string, unknown>): string {
+function getToolSummary(name?: string, input?: Record<string, unknown>): string {
   if (!input) return ''
-  if (name === 'Bash') return String(input.command ?? '').slice(0, 60)
-  if (name === 'Write' || name === 'Edit') return String(input.file_path ?? input.path ?? '')
-  if (name === 'Read') return String(input.file_path ?? '')
+  if (name === 'Bash') {
+    // Show command first line only — no "Bash" prefix
+    return String(input.command ?? '').split('\n')[0].slice(0, 80)
+  }
+  if (name === 'Read') return `Reading ${String(input.file_path ?? '')}`
+  if (name === 'Write') return `Writing ${String(input.file_path ?? input.path ?? '')}`
+  if (name === 'Edit') return `Editing ${String(input.file_path ?? input.path ?? '')}`
+  if (name === 'Grep') return `Searching ${String(input.pattern ?? '')}`
+  if (name === 'Glob') return `Globbing ${String(input.pattern ?? '')}`
+  if (name === 'WebFetch') return `Fetching ${String(input.url ?? '').slice(0, 60)}`
+  if (name === 'WebSearch') return `Searching ${String(input.query ?? '').slice(0, 60)}`
+  if (name === 'TodoWrite') {
+    const todos = Array.isArray(input.todos) ? input.todos : []
+    return todos.length > 0 ? `Planning ${todos.length} task${todos.length === 1 ? '' : 's'}` : 'Updating tasks'
+  }
   return JSON.stringify(input).slice(0, 60)
+}
+
+function ExpandedInput({ toolName, input }: { toolName?: string; input?: Record<string, unknown> }) {
+  if (!input) return null
+  if (toolName === 'Bash' && input.command) {
+    return (
+      <div>
+        <pre className="text-emerald-400/80 overflow-x-auto whitespace-pre-wrap break-all">$ {String(input.command)}</pre>
+        {input.description ? <div className="mt-1 text-zinc-600 italic">{String(input.description)}</div> : null}
+      </div>
+    )
+  }
+  if ((toolName === 'Edit') && input.old_string && input.new_string) {
+    return (
+      <div>
+        <div className="text-zinc-500 mb-1">{String(input.file_path ?? '')}</div>
+        <pre className="overflow-x-auto max-h-32">
+          <div className="text-red-400/80">- {String(input.old_string).slice(0, 120)}</div>
+          <div className="text-emerald-400/80">+ {String(input.new_string).slice(0, 120)}</div>
+        </pre>
+      </div>
+    )
+  }
+  return (
+    <pre className="text-zinc-400 overflow-x-auto max-h-32 whitespace-pre-wrap break-all">
+      {JSON.stringify(input, null, 2)}
+    </pre>
+  )
+}
+
+// ─── Tool Group Card ─────────────────────────────────────────────────────────
+// Groups consecutive tool calls like Manimate's ActivityGroupCard
+
+function ToolGroupCard({ pills, toolResults, isRunning }: {
+  pills: ChatMessage[]
+  toolResults: Map<string, ChatMessage>
+  isRunning: boolean
+}) {
+  const [expanded, setExpanded] = useState(true)
+  const rest = pills.slice(1)
+
+  return (
+    <div className="flex flex-col gap-1">
+      {/* First pill + toggle */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <ToolCallPill
+          msg={pills[0]}
+          result={pills[0].tool_id ? toolResults.get(pills[0].tool_id) : undefined}
+          isRunning={isRunning}
+        />
+        {rest.length > 0 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            {!expanded && <span>+{rest.length}</span>}
+            <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"
+              style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
+              <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {/* Remaining pills */}
+      {expanded && rest.map((msg) => (
+        <ToolCallPill
+          key={msg.id}
+          msg={msg}
+          result={msg.tool_id ? toolResults.get(msg.tool_id) : undefined}
+          isRunning={isRunning}
+        />
+      ))}
+    </div>
+  )
 }
 
 // ─── Chat Panel ──────────────────────────────────────────────────────────────
@@ -155,14 +275,34 @@ function ChatPanel({
     setUserScrolled(!atBottom)
   }
 
-  // Fix #4: compute once, O(n) instead of O(n²) inside map
   const lastAssistantId = messages.findLast((m) => m.role === 'assistant')?.id
 
-  // Group messages to associate tool_use with their tool_result
+  // Build lookup: tool_id → tool_result message
   const toolResults = new Map<string, ChatMessage>()
   for (const m of messages) {
     if (m.role === 'tool_result' && m.tool_id) toolResults.set(m.tool_id, m)
   }
+
+  // Group consecutive tool_use messages into clusters (Manimate-style)
+  type RenderItem =
+    | { kind: 'msg'; msg: ChatMessage }
+    | { kind: 'group'; pills: ChatMessage[] }
+
+  const renderItems: RenderItem[] = []
+  let currentGroup: ChatMessage[] = []
+  const flushGroup = () => {
+    if (currentGroup.length > 0) {
+      renderItems.push({ kind: 'group', pills: [...currentGroup] })
+      currentGroup = []
+    }
+  }
+  for (const msg of messages) {
+    if (msg.role === 'tool_result') continue
+    if (msg.role === 'tool_use') { currentGroup.push(msg); continue }
+    flushGroup()
+    renderItems.push({ kind: 'msg', msg })
+  }
+  flushGroup()
 
   return (
     <div
@@ -191,16 +331,16 @@ function ChatPanel({
         </div>
       )}
 
-      {messages.map((msg) => {
-        if (msg.role === 'tool_result') return null // rendered inline with tool_use
-
-        if (msg.role === 'tool_use') {
+      {renderItems.map((item, idx) => {
+        if (item.kind === 'group') {
           return (
-            <div key={msg.id} className="animate-slide-up">
-              <ToolCallPill msg={msg} result={msg.tool_id ? toolResults.get(msg.tool_id) : undefined} isRunning={isRunning} />
+            <div key={`grp-${idx}`} className="animate-slide-up">
+              <ToolGroupCard pills={item.pills} toolResults={toolResults} isRunning={isRunning} />
             </div>
           )
         }
+
+        const msg = item.msg
 
         if (msg.role === 'user') {
           return (
@@ -223,7 +363,6 @@ function ChatPanel({
           <div key={msg.id} className="animate-slide-up">
             <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
               {msg.content}
-              {/* Fix #4: lastAssistantId computed once outside the map */}
               {isRunning && msg.id === lastAssistantId && (
                 <span className="inline-block w-[2px] h-4 bg-indigo-400 ml-0.5 animate-[pulseDot_1s_ease-in-out_infinite] align-middle" />
               )}
