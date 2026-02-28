@@ -14,7 +14,8 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-import { MessageSquareOff } from 'lucide-react'
+
+
 import type { ChatMessage, Session, SSEEvent, WorkflowStep } from '@/lib/types'
 
 function mkMsg(partial: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
@@ -447,7 +448,6 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
           activeId={activeSessionId}
           onSelect={switchSession}
           onNew={createNewSession}
-          onCollapse={() => setSidebarOpen(false)}
         />
       )}
 
@@ -464,13 +464,6 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
                   {isRunning && (
                     <span className="text-xs text-primary animate-pulse">running…</span>
                   )}
-                  <button
-                    onClick={() => setChatOpen(false)}
-                    className="ml-auto p-1 rounded hover:bg-secondary transition-colors"
-                    title="Hide chat panel"
-                  >
-                    <MessageSquareOff className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
                 </div>
 
                 <ChatPanel messages={messages} isRunning={isRunning} />
