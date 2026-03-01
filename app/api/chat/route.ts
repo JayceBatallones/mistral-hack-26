@@ -11,16 +11,16 @@ function buildPrompt(
   sessionWorkspace: string,
   videoPath?: string
 ): string {
-  const skillMdPath = path.join(sessionWorkspace, 'SKILL.md')
+  const skillMdPath = path.join(sessionWorkspace, 'WORKFLOW.md')
   const lines: string[] = [
     '=== Ditto Context ===',
     `Session workspace: ${sessionWorkspace}`,
-    `IMPORTANT: When writing SKILL.md use the exact path: ${skillMdPath}`,
-    `Do NOT write SKILL.md to the project root or any other location.`,
+    `IMPORTANT: When writing WORKFLOW.md use the exact path: ${skillMdPath}`,
+    `Do NOT write WORKFLOW.md to the project root or any other location.`,
     `IMPORTANT: When replaying a workflow with browser-tools, always use the --new flag for the first navigation (e.g. browser-nav.js <url> --new). Never reuse the current tab for the initial navigation.`,
     '',
-    '=== SKILL.md Format ===',
-    'When generating SKILL.md, use EXACTLY this format:',
+    '=== WORKFLOW.md Format ===',
+    'When generating WORKFLOW.md, use EXACTLY this format:',
     '',
     '# <Skill Title>',
     '',
@@ -91,10 +91,10 @@ export async function POST(req: Request) {
             updateSession(session_id, { claude_session_id: event.session_id })
           }
 
-          // Ensure SKILL.md always lands in the session workspace, even if
+          // Ensure WORKFLOW.md always lands in the session workspace, even if
           // Claude wrote it somewhere else (e.g. the project root).
           if (event.type === 'skill_written') {
-            const dest = path.join(session.workspace, 'SKILL.md')
+            const dest = path.join(session.workspace, 'WORKFLOW.md')
             const src = event.path
             if (path.resolve(src) !== path.resolve(dest)) {
               try {

@@ -1,7 +1,7 @@
 import type { WorkflowStep } from './types'
 
 /**
- * Parse a SKILL.md file into WorkflowStep[].
+ * Parse a WORKFLOW.md file into WorkflowStep[].
  *
  * Handles multiple formats Claude generates:
  *
@@ -53,6 +53,7 @@ function parseHeadingSteps(text: string): WorkflowStep[] {
 
     // Extract description from body lines
     const description = extractDescription(body)
+    const outcome = extractOutcome(body)
     const code = extractCode(description || body)
     const type = inferStepType(title + ' ' + description)
 
@@ -63,6 +64,7 @@ function parseHeadingSteps(text: string): WorkflowStep[] {
       description,
       type,
       code,
+      outcome,
     })
   }
 
@@ -144,6 +146,9 @@ function parseNumberedList(text: string): WorkflowStep[] {
     const code = extractCode(title + ' ' + description)
     const type = inferStepType(title + ' ' + description)
 
+    // Search sub-lines for **Expected:** value
+    const outcome = extractOutcome(subLines.join('\n'))
+
     steps.push({
       id: `step-${num}`,
       stepNumber: num,
@@ -151,10 +156,17 @@ function parseNumberedList(text: string): WorkflowStep[] {
       description,
       type,
       code,
+      outcome,
     })
   }
 
   return steps
+}
+
+/** Extract the **Expected:** value from a block of text. */
+function extractOutcome(text: string): string | undefined {
+  const m = text.match(/\*\*Expected:\*\*\s*(.+)/)
+  return m ? m[1].trim() : undefined
 }
 
 /** Pull the first **Action:** or **Expected:** value, or first sentence. */

@@ -189,10 +189,10 @@ export function spawnClaude(
 
             send({ type: 'tool_use', id: toolId, tool_name: toolName, tool_input: toolInput })
 
-            // Detect SKILL.md write — fire skill_written for right panel refresh
+            // Detect WORKFLOW.md write — fire skill_written for right panel refresh
             if (toolName === 'Write' || toolName === 'Edit') {
               const filePath = (toolInput?.file_path ?? toolInput?.path ?? '') as string
-              if (typeof filePath === 'string' && filePath.includes('SKILL.md')) {
+              if (typeof filePath === 'string' && filePath.includes('WORKFLOW.md')) {
                 send({ type: 'skill_written', path: filePath })
               }
             }
@@ -213,7 +213,7 @@ export function spawnClaude(
               is_error: isError,
             })
 
-            // After a Write/Edit tool result, check if SKILL.md changed
+            // After a Write/Edit tool result, check if WORKFLOW.md changed
             // (belt-and-suspenders: skill_written may have already been sent via tool_use)
           }
         }

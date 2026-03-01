@@ -14,8 +14,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable'
-
-
+import { PanelLeftOpen } from 'lucide-react'
 import type { ChatMessage, Session, SSEEvent, WorkflowStep } from '@/lib/types'
 
 function mkMsg(partial: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
@@ -179,9 +178,9 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     fetchSkillMd(id)
   }
 
-  // ── Fetch SKILL.md
+  // ── Fetch WORKFLOW.md
   const fetchSkillMd = useCallback(async (sid: string) => {
-    const res = await fetch(`/api/files?session_id=${sid}&path=SKILL.md`)
+    const res = await fetch(`/api/files?session_id=${sid}&path=WORKFLOW.md`)
     const data = await res.json()
     if (data.content) setSkillContent(data.content)
   }, [])
@@ -277,10 +276,10 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
           tool_id: event.id,
           tool_input: event.tool_input,
         })
-        // Track Write/Edit calls targeting SKILL.md so we can refetch on result
+        // Track Write/Edit calls targeting WORKFLOW.md so we can refetch on result
         if (event.tool_name === 'Write' || event.tool_name === 'Edit') {
           const fp = String(event.tool_input?.file_path ?? event.tool_input?.path ?? '')
-          if (fp.includes('SKILL.md')) {
+          if (fp.includes('WORKFLOW.md')) {
             pendingSkillWriteIds.current.add(event.id)
           }
         }
@@ -297,7 +296,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
         if (event.is_error && activeStepIndexRef.current >= 0) {
           setStepStatuses(prev => ({ ...prev, [activeStepIndexRef.current]: 'error' }))
         }
-        // Refetch SKILL.md once the write/edit has actually completed
+        // Refetch WORKFLOW.md once the write/edit has actually completed
         if (pendingSkillWriteIds.current.has(event.tool_use_id)) {
           pendingSkillWriteIds.current.delete(event.tool_use_id)
           fetchSkillMd(sessionId)
@@ -390,7 +389,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     const url = new URL(window.location.href)
     url.searchParams.delete('auto_start')
     window.history.replaceState({}, '', url)
-    handleSend('Use /video-frame-reader to analyze the attached video and generate a SKILL.md')
+    handleSend('Use /video-frame-reader to analyze the attached video and generate a WORKFLOW.md')
   }, [autoStart, attachedVideo, activeSessionId, handleSend])
 
   const handleStop = async () => {
@@ -409,7 +408,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
     if (isRunning || !skillContent) return
     setActiveStepIndex(0)
     setStepStatuses({})
-    handleSend('Run the workflow defined in SKILL.md using /browser-tools')
+    handleSend('Run the workflow defined in WORKFLOW.md using /browser-tools')
   }, [isRunning, skillContent, handleSend])
 
   const handleToggleFullscreen = useCallback(() => {
@@ -442,13 +441,22 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
-      {sidebarOpen && (
+      {sidebarOpen ? (
         <SessionSidebar
           sessions={sessions}
           activeId={activeSessionId}
           onSelect={switchSession}
           onNew={createNewSession}
+          onCollapse={() => setSidebarOpen(false)}
         />
+      ) : (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="flex items-center justify-center w-10 shrink-0 border-r border-border bg-background hover:bg-secondary transition-colors"
+          title="Open sessions sidebar"
+        >
+          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
+        </button>
       )}
 
       {/* Main content */}
@@ -460,7 +468,7 @@ export function ProcessingView({ sessionId: propSessionId }: ProcessingViewProps
                 {/* Panel header */}
                 <div className="flex items-center gap-2 px-4 h-10 border-b border-border shrink-0">
                   <div className="w-2 h-2 rounded-full bg-node-verify/60" />
-                  <span className="text-xs text-muted-foreground font-medium">Mimi</span>
+                  <span className="text-xs text-muted-foreground font-medium">Ditto</span>
                   {isRunning && (
                     <span className="text-xs text-primary animate-pulse">running…</span>
                   )}

@@ -25,6 +25,8 @@ import {
   XCircle,
   Maximize2,
   Minimize2,
+  Target,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { WorkflowStep, StepStatus } from "@/lib/types"
@@ -377,7 +379,7 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement("a")
                 a.href = url
-                a.download = "SKILL.md"
+                a.download = "WORKFLOW.md"
                 a.click()
                 URL.revokeObjectURL(url)
               }}
@@ -488,6 +490,41 @@ export function WorkflowNodes({ steps, activeStepIndex, markdown, onRun, isRunni
   )
 }
 
+/* ── Outcome popup ── */
+function OutcomePopup({ text, onClose }: { text: string; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose()
+    }
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener("keydown", handleKey)
+    document.addEventListener("pointerdown", handleClick)
+    return () => {
+      document.removeEventListener("keydown", handleKey)
+      document.removeEventListener("pointerdown", handleClick)
+    }
+  }, [onClose])
+
+  return (
+    <div
+      ref={ref}
+      className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 w-72 animate-fade-in rounded-xl border border-node-verify/30 bg-card p-3 shadow-lg"
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-node-verify">Expected Outcome</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <p className="text-xs text-muted-foreground leading-relaxed">{text}</p>
+    </div>
+  )
+}
+
 /* ── Draggable card ── */
 function DraggableCard({
   step, isActive, isCompleted, dimmed, compact, setRef, onDrag, status,
@@ -499,12 +536,17 @@ function DraggableCard({
   const c = typeColor[step.type]
   const I = getIcon(step)
   const lastPos = useRef({ x: 0, y: 0 })
+  const startPos = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
+  const hasMoved = useRef(false)
+  const [showOutcome, setShowOutcome] = useState(false)
 
   const down = useCallback((e: RPointer<HTMLDivElement>) => {
     e.preventDefault()
     dragging.current = true
+    hasMoved.current = false
     lastPos.current = { x: e.clientX, y: e.clientY }
+    startPos.current = { x: e.clientX, y: e.clientY }
     e.currentTarget.setPointerCapture(e.pointerId)
   }, [])
 
@@ -513,10 +555,20 @@ function DraggableCard({
     const dx = e.clientX - lastPos.current.x
     const dy = e.clientY - lastPos.current.y
     lastPos.current = { x: e.clientX, y: e.clientY }
+    if (!hasMoved.current) {
+      const totalDx = Math.abs(e.clientX - startPos.current.x)
+      const totalDy = Math.abs(e.clientY - startPos.current.y)
+      if (totalDx > 2 || totalDy > 2) hasMoved.current = true
+    }
     onDrag(dx, dy)
   }, [onDrag])
 
-  const up = useCallback(() => { dragging.current = false }, [])
+  const up = useCallback(() => {
+    dragging.current = false
+    if (!hasMoved.current && step.outcome) {
+      setShowOutcome(prev => !prev)
+    }
+  }, [step.outcome])
 
   // Icon box: status icon > type icon
   const iconSize = compact ? "h-4 w-4" : "h-[18px] w-[18px]"
@@ -547,7 +599,7 @@ function DraggableCard({
     : isCompleted ? "border-primary/20 bg-primary/10 text-primary"
     : "border-border bg-secondary text-muted-foreground"
 
-  return (
+  const card = (
     <div
       ref={setRef}
       data-node-id={step.id}
@@ -576,12 +628,26 @@ function DraggableCard({
         isActive ? "text-foreground" : isCompleted ? "text-foreground/80" : "text-muted-foreground",
       )}>
         <TitleWithLogos title={step.title} />
+        {step.outcome && (
+          <Target className="h-3 w-3 text-node-verify opacity-50 ml-0.5 shrink-0" />
+        )}
       </span>
       {isActive && !status && (
         <span className="relative ml-1 flex h-2 w-2 shrink-0">
           <span className={cn("absolute inline-flex h-2 w-2 animate-ping rounded-full opacity-75", c.iconBg)} />
           <span className={cn("relative inline-flex h-2 w-2 rounded-full", c.iconBg)} />
         </span>
+      )}
+    </div>
+  )
+
+  if (!step.outcome) return card
+
+  return (
+    <div className="relative">
+      {card}
+      {showOutcome && (
+        <OutcomePopup text={step.outcome} onClose={() => setShowOutcome(false)} />
       )}
     </div>
   )

@@ -257,11 +257,11 @@ export function ChatPanel({
           <div className="text-4xl mb-2">⚡</div>
           <p className="text-muted-foreground text-sm font-medium">Attach a video and describe the workflow</p>
           <p className="text-muted-foreground/60 text-xs max-w-xs">
-            Claude will extract keyframes, analyze each one, and generate a replayable SKILL.md
+            Claude will extract keyframes, analyze each one, and generate a replayable WORKFLOW.md
           </p>
           <div className="mt-4 space-y-1.5">
             {[
-              'use /video-frame-reader on this and create SKILL.md',
+              'use /video-frame-reader on this and create WORKFLOW.md',
               'step 3 is wrong — the user clicked Login not Sign Up',
               'replay the workflow',
             ].map((ex) => (

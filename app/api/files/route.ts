@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const sessionId = url.searchParams.get('session_id')
-  const filePath = url.searchParams.get('path') ?? 'SKILL.md'
+  const filePath = url.searchParams.get('path') ?? 'WORKFLOW.md'
 
   if (!sessionId) return Response.json({ error: 'session_id required' }, { status: 400 })
 

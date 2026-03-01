@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-mono' })
 
 export const metadata: Metadata = {
   title: 'Ditto',
-  description: 'Mimi studies your recording, copies each move, and Claude replays the resulting SKILL.md.',
+  description: 'Ditto studies your recording, copies each move, and Claude replays the resulting WORKFLOW.md.',
 }
 
 export const viewport: Viewport = {

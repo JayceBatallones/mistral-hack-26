@@ -9,7 +9,7 @@ export function MimiLogo({ className, ...rest }: React.SVGProps<SVGSVGElement>) 
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="Mimi the mimic"
+      aria-label="Ditto the mimic"
       className={className}
       {...rest}
     >

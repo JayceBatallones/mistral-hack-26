@@ -28,7 +28,7 @@ export function UploadHero() {
       const uploadData = await uploadRes.json()
 
       if (uploadData.path) {
-        router.push(`/skills/${session.id}?video_path=${encodeURIComponent(uploadData.path)}&video_name=${encodeURIComponent(uploadData.name)}`)
+        router.push(`/skills/${session.id}?video_path=${encodeURIComponent(uploadData.path)}&video_name=${encodeURIComponent(uploadData.name)}&auto_start=true`)
       }
     } catch {
       setIsUploading(false)
@@ -83,7 +83,7 @@ export function UploadHero() {
       {/* Greeting section */}
       <div className="mb-12 text-center">
         <h1 className="mb-5 text-balance text-4xl font-medium tracking-tight text-[var(--color-ink)] md:text-5xl lg:text-6xl font-serif leading-tight">
-          Teach Mimi
+          Teach Ditto
           <br />
           <span className="italic text-[var(--color-ink-light)]">to mimic your workflow</span>
         </h1>

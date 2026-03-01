@@ -40,6 +40,7 @@ export interface WorkflowStep {
   details?: string[]
   code?: string
   branches?: WorkflowStep[]
+  outcome?: string
 }
 
 export type StepStatus = 'pending' | 'running' | 'success' | 'error'

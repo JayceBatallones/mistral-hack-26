@@ -102,19 +102,19 @@ export function recoverSession(workspaceDir: string): Session | null {
   }
 }
 
-// ── SKILL.md helpers ─────────────────────────────────────────────────────────
+// ── WORKFLOW.md helpers ─────────────────────────────────────────────────────────
 
 export function hasSkillMd(id: string): boolean {
   const session = getSession(id)
   if (!session) return false
-  const skillPath = path.join(session.workspace, 'SKILL.md')
+  const skillPath = path.join(session.workspace, 'WORKFLOW.md')
   return fs.existsSync(skillPath)
 }
 
 export function getSkillTitle(id: string): string | null {
   const session = getSession(id)
   if (!session) return null
-  const skillPath = path.join(session.workspace, 'SKILL.md')
+  const skillPath = path.join(session.workspace, 'WORKFLOW.md')
   try {
     const content = fs.readFileSync(skillPath, 'utf-8')
     // Extract title from first heading

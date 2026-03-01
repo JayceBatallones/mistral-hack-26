@@ -44,7 +44,7 @@ export function SkillDetailContainer({ sessionId }: SkillDetailContainerProps) {
       try {
         const [msgRes, fileRes] = await Promise.all([
           fetch(`/api/sessions/${sessionId}`),
-          fetch(`/api/files?session_id=${sessionId}&path=SKILL.md`),
+          fetch(`/api/files?session_id=${sessionId}&path=WORKFLOW.md`),
         ])
 
         if (msgRes.ok) {

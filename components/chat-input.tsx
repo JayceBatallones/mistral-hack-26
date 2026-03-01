@@ -52,7 +52,7 @@ export function ChatInput({
   const handleSend = () => {
     if (isRunning) return
     const trimmed = text.trim()
-    const prompt = trimmed || (attachedVideo ? 'Use /video-frame-reader to analyze the attached video and generate a SKILL.md' : '')
+    const prompt = trimmed || (attachedVideo ? 'Use /video-frame-reader to analyze the attached video and generate a WORKFLOW.md' : '')
     if (!prompt) return
     onSend(prompt)
     setText('')
@@ -191,7 +191,10 @@ export function ChatInput({
       fd.append('session_id', sessionId)
       const res = await fetch('/api/chat/uploads', { method: 'POST', body: fd })
       const data = await res.json()
-      if (data.path) onVideoUploaded(data.path, data.name)
+      if (data.path) {
+        onVideoUploaded(data.path, data.name)
+        setTimeout(() => onSend('Use /video-frame-reader to analyze the attached video and generate a WORKFLOW.md'), 100)
+      }
     } finally {
       setUploading(false)
     }
@@ -287,7 +290,7 @@ export function ChatInput({
               transcribing
                 ? 'Transcribing…'
                 : attachedVideo
-                  ? 'use /video-frame-reader on this and create SKILL.md'
+                  ? 'use /video-frame-reader on this and create WORKFLOW.md'
                   : isRecording
                     ? 'Or type here…'
                     : 'Type a prompt, or drag a video here…'
