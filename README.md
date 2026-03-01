@@ -1,8 +1,8 @@
-# Mimic
+# Ditto
 
 Record once. AI watches. Runs forever.
 
-Mimi, Mimic’s analysis companion, watches your recording, copies the workflow, and writes a replayable `SKILL.md` while Claude validates it. Then say "replay the workflow" and Claude drives Chrome to execute it.
+Mimi, Ditto’s analysis companion, watches your recording, copies the workflow, and writes a replayable `SKILL.md` while Claude validates it. Then say "replay the workflow" and Claude drives Chrome to execute it.
 
 ## Prerequisites
 
@@ -40,10 +40,10 @@ workspaces/
     SKILL.md         # generated skill file
 ```
 
-Override with `MIMIC_WORKSPACES_DIR` in `.env.local`:
+Override with `DITTO_WORKSPACES_DIR` in `.env.local`:
 
 ```bash
-MIMIC_WORKSPACES_DIR=/path/to/your/workspaces
+DITTO_WORKSPACES_DIR=/path/to/your/workspaces
 ```
 
 ## Notes
@@ -55,4 +55,4 @@ MIMIC_WORKSPACES_DIR=/path/to/your/workspaces
 ## Meet Mimi
 
 - Mimi is the mimic — she sees what you do, copies the steps, and keeps everything in sync with SKILL.md.
-- The `Mimic` brand centers on this character and the idea that once Mimi learns a workflow, she can replay it anytime.
+- The `Ditto` brand centers on this character and the idea that once Mimi learns a workflow, she can replay it anytime.

@@ -1,6 +1,6 @@
 # PRD: Video → Skill → Agent (via Claude Code)
 
-**Product Name:** Mimic (working title)
+**Product Name:** Ditto (working title)
 **Date:** February 28, 2026
 **Team Size:** 3 engineers (hackathon)
 **Timeframe:** 1-day build

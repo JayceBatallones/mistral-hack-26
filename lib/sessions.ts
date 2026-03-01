@@ -12,10 +12,10 @@ declare global {
 const sessions: Map<string, Session> =
   globalThis.__sf_sessions ?? (globalThis.__sf_sessions = new Map())
 
-// Default: <project-root>/workspaces. Override with MIMIC_WORKSPACES_DIR env var.
+// Default: <project-root>/workspaces. Override with DITTO_WORKSPACES_DIR env var.
 export const WORKSPACES_DIR =
-  process.env.MIMIC_WORKSPACES_DIR
-    ? path.resolve(process.env.MIMIC_WORKSPACES_DIR)
+  process.env.DITTO_WORKSPACES_DIR
+    ? path.resolve(process.env.DITTO_WORKSPACES_DIR)
     : path.join(process.cwd(), 'workspaces')
 
 export function createSession(): Session {

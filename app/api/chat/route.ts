@@ -13,7 +13,7 @@ function buildPrompt(
 ): string {
   const skillMdPath = path.join(sessionWorkspace, 'SKILL.md')
   const lines: string[] = [
-    '=== Mimic Context ===',
+    '=== Ditto Context ===',
     `Session workspace: ${sessionWorkspace}`,
     `IMPORTANT: When writing SKILL.md use the exact path: ${skillMdPath}`,
     `Do NOT write SKILL.md to the project root or any other location.`,

@@ -23,7 +23,7 @@ export function Navbar() {
           <Link href="/" className="flex items-center gap-3">
             <MimiLogo className="h-10 w-10 mimi-bounce" />
             <span className="text-2xl font-semibold tracking-tight text-[var(--color-ink)] font-serif">
-              Mimic
+              Ditto
             </span>
           </Link>
         </div>

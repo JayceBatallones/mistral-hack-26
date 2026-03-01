@@ -188,10 +188,10 @@
 }
 
 .mimi-bounce {
-  animation: mimic-bounce 4s ease-in-out infinite;
+  animation: ditto-bounce 4s ease-in-out infinite;
 }
 
-@keyframes mimic-bounce {
+@keyframes ditto-bounce {
   0%, 100% {
     transform: translateY(0) scale(1);
   }
